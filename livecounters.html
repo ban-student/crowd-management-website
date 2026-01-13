@@ -1,0 +1,946 @@
+livecounters.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Counters - Crowd Analytics</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ff9933 0%, #ffffff 50%, #138808 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+        
+        .header-title {
+            color: white;
+        }
+        
+        .header-title h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .header-title p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        
+        .live-indicator {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .controls-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff6b35, #ff9f43);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .counters-overview {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .overview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .overview-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .total-summary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .total-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            animation: countUp 1s ease-out;
+        }
+        
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .total-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .counters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .counter-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .counter-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .counter-card:hover::before {
+            left: 100%;
+        }
+        
+        .counter-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-safe { border-left-color: #10b981; }
+        .card-warning { border-left-color: #f59e0b; }
+        .card-critical { border-left-color: #ef4444; animation: shake 1.5s infinite; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .zone-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .zone-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .icon-safe { background: linear-gradient(135deg, #10b981, #34d399); }
+        .icon-warning { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+        .icon-critical { background: linear-gradient(135deg, #ef4444, #f87171); }
+        
+        .zone-details h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .zone-id {
+            font-size: 0.9rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .status-safe {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+        
+        .status-critical {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .counter-display {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            margin: 25px 0;
+            gap: 5px;
+        }
+        
+        .current-count {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            animation: countUp 1s ease-out;
+        }
+        
+        .capacity-count {
+            font-size: 1.5rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+        
+        .percentage-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .percentage-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            position: relative;
+            background: conic-gradient(from 0deg, var(--progress-color) 0%, var(--progress-color) var(--progress), #e5e7eb var(--progress), #e5e7eb 100%);
+        }
+        
+        .percentage-circle::before {
+            content: '';
+            position: absolute;
+            inset: 10px;
+            border-radius: 50%;
+            background: white;
+        }
+        
+        .percentage-text {
+            position: relative;
+            z-index: 1;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e5e7eb;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .fill-safe { background: linear-gradient(90deg, #10b981, #34d399); }
+        .fill-warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .fill-critical { background: linear-gradient(90deg, #ef4444, #f87171); }
+        
+        .metrics-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .metric-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .trend-up { color: #ef4444; }
+        .trend-down { color: #10b981; }
+        .trend-stable { color: #6b7280; }
+        
+        .historical-chart {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .chart-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .time-selector {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .time-btn {
+            padding: 8px 16px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+        
+        .time-btn.active,
+        .time-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .chart-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #cbd5e0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-placeholder::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><path d="M0,150 Q100,100 200,120 T400,80" stroke="%23667eea" stroke-width="3" fill="none" opacity="0.3"/><circle cx="100" cy="110" r="4" fill="%23667eea" opacity="0.5"/><circle cx="200" cy="120" r="4" fill="%23f59e0b" opacity="0.5"/><circle cx="300" cy="90" r="4" fill="%2310b981" opacity="0.5"/></svg>') no-repeat center;
+            opacity: 0.6;
+        }
+        
+        .alerts-summary {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 15px;
+            padding: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .alert-stat {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .alert-stat:hover {
+            transform: translateY(-5px);
+        }
+        
+        .alert-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .alert-label {
+            font-size: 1rem;
+            color: #4a5568;
+            font-weight: 600;
+        }
+        
+        .peak-hours { color: #667eea; }
+        .avg-occupancy { color: #f59e0b; }
+        .busiest-zone { color: #ef4444; }
+        .efficiency { color: #10b981; }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .controls-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .counters-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .overview-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .total-summary {
+                min-width: auto;
+            }
+            
+            .metrics-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .time-selector {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button class="back-button" onclick="goBack()">← Back</button>
+            <div class="header-title">
+                <h1>📊 Live Counters</h1>
+                <p>Real-time people counting system</p>
+            </div>
+        </div>
+        <div class="live-indicator">
+            <div class="status-dot"></div>
+            <span>LIVE</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls-panel">
+            <div class="control-group">
+                <button class="btn btn-primary" onclick="refreshCounters()">🔄 Refresh</button>
+                <button class="btn btn-secondary" onclick="resetCounters()">🔄 Reset</button>
+                <button class="btn btn-success" onclick="exportCounters()">📊 Export</button>
+            </div>
+            <div class="control-group">
+                <span style="color: #6b7280; font-weight: 500;">Last Updated:</span>
+                <span id="lastUpdated" style="color: #2d3748; font-weight: 600;">--</span>
+            </div>
+        </div>
+
+        <div class="counters-overview">
+            <div class="overview-header">
+                <h2 class="overview-title">Zone Counters Overview</h2>
+                <div class="total-summary">
+                    <div class="total-number" id="totalPeople">--</div>
+                    <div class="total-label">Total People Counted</div>
+                </div>
+            </div>
+
+            <div class="counters-grid" id="countersGrid">
+                <!-- Counter cards will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="historical-chart">
+            <div class="chart-header">
+                <h3 class="chart-title">Historical Trends</h3>
+                <div class="time-selector">
+                    <button class="time-btn active" onclick="selectTimeRange('1h')">1H</button>
+                    <button class="time-btn" onclick="selectTimeRange('6h')">6H</button>
+                    <button class="time-btn" onclick="selectTimeRange('24h')">24H</button>
+                    <button class="time-btn" onclick="selectTimeRange('7d')">7D</button>
+                </div>
+            </div>
+            <div class="chart-placeholder">
+                <div style="text-align: center; color: #6b7280;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">📈</div>
+                    <h4 style="margin-bottom: 10px;">Historical Data Visualization</h4>
+                    <p>Real-time counting trends and patterns</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="alerts-summary">
+            <div class="alert-stat">
+                <div class="alert-number peak-hours" id="peakHours">2-4 PM</div>
+                <div class="alert-label">Peak Hours</div>
+            </div>
+            <div class="alert-stat">
+                <div class="alert-number avg-occupancy" id="avgOccupancy">--</div>
+                <div class="alert-label">Average Occupancy</div>
+            </div>
+            <div class="alert-stat">
+                <div class="alert-number busiest-zone" id="busiestZone">--</div>
+                <div class="alert-label">Busiest Zone</div>
+            </div>
+            <div class="alert-stat">
+                <div class="alert-number efficiency" id="efficiency">98.5%</div>
+                <div class="alert-label">System Accuracy</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:5000/api';
+
+        // Mock data for demonstration
+        const mockCountersData = {
+            A: { name: 'Main Entry Gate', current: 425, capacity: 500, percentage: 85, trend: 'up' },
+            B: { name: 'Food Court Area', current: 285, capacity: 300, percentage: 95, trend: 'stable' },
+            C: { name: 'Exhibition Hall', current: 520, capacity: 800, percentage: 65, trend: 'down' },
+            D: { name: 'Parking Zone', current: 90, capacity: 200, percentage: 45, trend: 'stable' },
+            E: { name: 'Emergency Exit', current: 38, capacity: 150, percentage: 25, trend: 'down' }
+        };
+
+        // Navigation functions
+        function goBack() {
+    window.location.href = 'analyticsdashboard.html';
+}
+        // Data fetching
+        async function fetchCountersData() {
+            try {
+                const response = await fetch(`${API_BASE}/counters`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.counters || mockCountersData;
+                } else {
+                    throw new Error('API not available');
+                }
+            } catch (error) {
+                console.log('Using mock data');
+                return mockCountersData;
+            }
+        }
+
+        // Update counters display
+        function updateCountersDisplay(counters) {
+            const countersGrid = document.getElementById('countersGrid');
+            countersGrid.innerHTML = '';
+
+            let totalPeople = 0;
+            let totalCapacity = 0;
+
+            Object.entries(counters).forEach(([zoneId, counter]) => {
+                totalPeople += counter.current;
+                totalCapacity += counter.capacity;
+
+                const statusClass = counter.percentage > 90 ? 'critical' : 
+                                   counter.percentage > 75 ? 'warning' : 'safe';
+                
+                const trendIcon = counter.trend === 'up' ? '📈' : 
+                                 counter.trend === 'down' ? '📉' : '➡️';
+                const trendClass = counter.trend === 'up' ? 'trend-up' : 
+                                  counter.trend === 'down' ? 'trend-down' : 'trend-stable';
+
+                const counterCard = document.createElement('div');
+                counterCard.className = `counter-card card-${statusClass}`;
+                counterCard.onclick = () => showCounterDetails(zoneId, counter);
+
+                counterCard.innerHTML = `
+                    <div class="card-header">
+                        <div class="zone-info">
+                            <div class="zone-icon icon-${statusClass}">
+                                ${zoneId}
+                            </div>
+                            <div class="zone-details">
+                                <h3>${counter.name}</h3>
+                                <div class="zone-id">Zone ${zoneId}</div>
+                            </div>
+                        </div>
+                        <div class="status-badge status-${statusClass}">
+                            ${statusClass}
+                        </div>
+                    </div>
+                    
+                    <div class="counter-display">
+                        <div class="current-count">${counter.current}</div>
+                        <div class="capacity-count">/${counter.capacity}</div>
+                    </div>
+                    
+                    <div class="percentage-display">
+                        <div class="percentage-circle" style="--progress: ${counter.percentage * 3.6}deg; --progress-color: ${getProgressColor(counter.percentage)}">
+                            <div class="percentage-text">${counter.percentage}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill fill-${statusClass}" style="width: ${counter.percentage}%"></div>
+                    </div>
+                    
+                    <div class="metrics-row">
+                        <div class="metric-item">
+                            <div class="metric-value">${counter.capacity - counter.current}</div>
+                            <div class="metric-label">Available</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${Math.round((counter.current / counter.capacity) * 100)}%</div>
+                            <div class="metric-label">Utilization</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value trend-indicator ${trendClass}">
+                                ${trendIcon} ${counter.trend}
+                            </div>
+                            <div class="metric-label">Trend</div>
+                        </div>
+                    </div>
+                `;
+
+                countersGrid.appendChild(counterCard);
+            });
+
+            // Update totals and statistics
+            document.getElementById('totalPeople').textContent = totalPeople.toLocaleString();
+            
+            const avgOccupancy = (totalPeople / totalCapacity) * 100;
+            document.getElementById('avgOccupancy').textContent = `${avgOccupancy.toFixed(1)}%`;
+            
+            const busiestZone = Object.entries(counters).reduce((max, [id, counter]) => 
+                counter.percentage > max.percentage ? { id, ...counter } : max
+            );
+            document.getElementById('busiestZone').textContent = `Zone ${busiestZone.id}`;
+
+            updateLastUpdated();
+            animateCounters();
+        }
+
+        // Get progress color based on percentage
+        function getProgressColor(percentage) {
+            if (percentage > 90) return '#ef4444';
+            if (percentage > 75) return '#f59e0b';
+            return '#10b981';
+        }
+
+        // Animate counter numbers
+        function animateCounters() {
+            const counterNumbers = document.querySelectorAll('.current-count');
+            counterNumbers.forEach((counter, index) => {
+                const target = parseInt(counter.textContent);
+                counter.textContent = '0';
+                
+                const increment = target / 50;
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        counter.textContent = target;
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = Math.floor(current);
+                    }
+                }, 20);
+            });
+        }
+
+        // Update last updated timestamp
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = now.toLocaleTimeString();
+        }
+
+        // Show counter details
+        function showCounterDetails(zoneId, counter) {
+            const statusIcon = counter.percentage > 90 ? '🚨' : 
+                              counter.percentage > 75 ? '⚠️' : '✅';
+            
+            const efficiency = Math.round(95 + Math.random() * 5); // Mock efficiency
+            const lastHourChange = Math.round((Math.random() - 0.5) * 50); // Mock change
+            
+            alert(`${statusIcon} Zone ${zoneId} - ${counter.name}\n\n` +
+                  `Current Count: ${counter.current} people\n` +
+                  `Capacity: ${counter.capacity} people\n` +
+                  `Occupancy: ${counter.percentage}%\n` +
+                  `Available Space: ${counter.capacity - counter.current} people\n` +
+                  `Trend: ${counter.trend}\n` +
+                  `Last Hour Change: ${lastHourChange > 0 ? '+' : ''}${lastHourChange}\n` +
+                  `Counter Accuracy: ${efficiency}%\n\n` +
+                  `Click OK to view detailed analytics.`);
+        }
+
+        // Control functions
+        async function refreshCounters() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '🔄 Refreshing...';
+            btn.disabled = true;
+
+            try {
+                const counters = await fetchCountersData();
+                updateCountersDisplay(counters);
+            } catch (error) {
+                console.error('Refresh failed:', error);
+            } finally {
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 1000);
+            }
+        }
+
+        function resetCounters() {
+            if (confirm('Are you sure you want to reset all counters? This will clear all current count data.')) {
+                const resetData = Object.fromEntries(
+                    Object.entries(mockCountersData).map(([id, counter]) => [
+                        id, { ...counter, current: 0, percentage: 0, trend: 'stable' }
+                    ])
+                );
+                
+                updateCountersDisplay(resetData);
+                
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Reset!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }
+        }
+
+        function exportCounters() {
+            const counters = mockCountersData;
+            const csvContent = "data:text/csv;charset=utf-8," +
+                "Zone ID,Zone Name,Current Count,Capacity,Occupancy %,Available,Trend\n" +
+                Object.entries(counters).map(([id, counter]) => 
+                    `${id},"${counter.name}",${counter.current},${counter.capacity},${counter.percentage}%,${counter.capacity - counter.current},${counter.trend}`
+                ).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `counters_data_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✅ Exported!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        function selectTimeRange(range) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Here you would typically update the chart with new data
+            console.log(`Selected time range: ${range}`);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            const counters = await fetchCountersData();
+            updateCountersDisplay(counters);
+            
+            // Add staggered animation to counter cards
+            const counterCards = document.querySelectorAll('.counter-card');
+            counterCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'all 0.6s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 150);
+            });
+
+            // Auto-refresh every 10 seconds
+            setInterval(async () => {
+                const counters = await fetchCountersData();
+                updateCountersDisplay(counters);
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
