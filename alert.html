@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Alert System - Smart Crowd Management</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #ff6b35, #ff9f43);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+        }
+        
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b35, #ff9f43);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .emergency-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(16, 185, 129, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse-status 2s infinite;
+        }
+        
+        @keyframes pulse-status {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        .alert-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .alert-map-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .alert-map-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 107, 53, 0.1), transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(79, 172, 254, 0.1), transparent 50%);
+            pointer-events: none;
+        }
+        
+        .venue-map {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .zone {
+            position: absolute;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .zone:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        .zone-safe {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.8));
+            color: white;
+        }
+        
+        .zone-warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.8), rgba(217, 119, 6, 0.8));
+            color: white;
+            animation: warning-pulse 2s infinite;
+        }
+        
+        .zone-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(220, 38, 38, 0.8));
+            color: white;
+            animation: danger-pulse 1.5s infinite;
+        }
+        
+        .zone-critical {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.9), rgba(124, 58, 237, 0.9));
+            color: white;
+            animation: critical-pulse 1s infinite;
+        }
+        
+        @keyframes warning-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(245, 158, 11, 0); }
+        }
+        
+        @keyframes danger-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+            50% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+        }
+        
+        @keyframes critical-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.9); }
+            50% { box-shadow: 0 0 0 25px rgba(147, 51, 234, 0); }
+        }
+        
+        /* Zone positions */
+        .zone-1 { top: 20px; left: 20px; width: 120px; height: 80px; }
+        .zone-2 { top: 20px; right: 20px; width: 120px; height: 80px; }
+        .zone-3 { bottom: 150px; left: 50%; transform: translateX(-50%); width: 200px; height: 100px; }
+        .zone-4 { bottom: 20px; left: 20px; width: 140px; height: 90px; }
+        .zone-5 { bottom: 20px; right: 20px; width: 140px; height: 90px; }
+        .zone-6 { top: 50%; left: 20px; transform: translateY(-50%); width: 100px; height: 120px; }
+        .zone-7 { top: 50%; right: 20px; transform: translateY(-50%); width: 100px; height: 120px; }
+        
+        .alert-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            height: fit-content;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .panel-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        
+        .alert-count {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-5px); }
+            60% { transform: translateY(-3px); }
+        }
+        
+        .alert-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .alert-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(5px);
+        }
+        
+        .alert-critical {
+            border-left-color: #9333ea;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(124, 58, 237, 0.05));
+        }
+        
+        .alert-high {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+        }
+        
+        .alert-medium {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .alert-time {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .alert-description {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .alert-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-resolve {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .action-escalate {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .action-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .controls-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .control-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .control-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 107, 53, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .control-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #ff6b35, #ff9f43);
+            color: white;
+        }
+        
+        .control-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+        
+        .control-description {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        
+        .control-btn {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .emergency-protocols {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .protocol-card {
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(79, 70, 229, 0.1));
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .protocol-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(147, 51, 234, 0.2);
+        }
+        
+        .protocol-level {
+            display: inline-block;
+            background: linear-gradient(135deg, #9333ea, #7c3aed);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .protocol-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+        
+        .protocol-steps {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .protocol-steps li {
+            padding: 8px 0;
+            color: rgba(255, 255, 255, 0.8);
+            position: relative;
+            padding-left: 25px;
+        }
+        
+        .protocol-steps li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #ff6b35;
+            font-weight: bold;
+        }
+        
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #ff6b35;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+        
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+        
+        .audio-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .audio-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+        
+        .language-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .announce-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 1200px) {
+            .alert-dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .venue-map {
+                height: 400px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header-title {
+                font-size: 1.5rem;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .zone {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <button class="back-btn" onclick="window.history.back()">
+            ← Back to Dashboard
+        </button>
+        <h1 class="header-title">🚨 AI Alert System</h1>
+        <div class="emergency-status">
+            <div class="status-indicator"></div>
+            <span>System Active</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Real-time Statistics -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number" id="activeAlerts">5</div>
+                <div class="stat-label">Active Alerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPeople">2,847</div>
+                <div class="stat-label">People Monitored</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="responseTime">43s</div>
+                <div class="stat-label">Avg Response Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="resolutionRate">94%</div>
+                <div class="stat-label">Resolution Rate</div>
+            </div>
+        </div>
+
+        <!-- Main Alert Dashboard -->
+        <div class="alert-dashboard">
+            <div class="alert-map-container">
+                <h3 style="margin-bottom: 20px; font-size: 1.3rem; font-weight: 700;">Live Venue Map</h3>
+                <div class="venue-map" id="venueMap">
+                    <div class="zone zone-safe zone-1" data-zone="1" onclick="showZoneDetails(1)">
+                        Zone A<br>Safe
+                    </div>
+                    <div class="zone zone-warning zone-2" data-zone="2" onclick="showZoneDetails(2)">
+                        Zone B<br>Warning
+                    </div>
+                    <div class="zone zone-danger zone-3" data-zone="3" onclick="showZoneDetails(3)">
+                        Main Stage<br>High Density
+                    </div>
+                    <div class="zone zone-safe zone-4" data-zone="4" onclick="showZoneDetails(4)">
+                        Zone C<br>Safe
+                    </div>
+                    <div class="zone zone-critical zone-5" data-zone="5" onclick="showZoneDetails(5)">
+                        Exit Gate<br>CRITICAL
+                    </div>
+                    <div class="zone zone-warning zone-6" data-zone="6" onclick="showZoneDetails(6)">
+                        Food Court<br>Crowded
+                    </div>
+                    <div class="zone zone-safe zone-7" data-zone="7" onclick="showZoneDetails(7)">
+                        Zone D<br>Safe
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Live Alerts</h3>
+                    <span class="alert-count" id="alertCount">5 Active</span>
+                </div>
+
+                <div class="alert-item alert-critical">
+                    <div class="alert-header">
+                        <div class="alert-title">🔴 CRITICAL: Exit Gate Blocked</div>
+                        <div class="alert-time">2 min ago</div>
+                    </div>
+                    <div class="alert-description">
+                        Exit Gate Zone showing 95% capacity with blocked emergency exit. Immediate intervention required.
+                    </div>
+                    <div class="alert-actions">
+                        <button class="action-btn action-escalate" onclick="escalateAlert('critical-1')">Escalate</button>
+                        <button class="action-btn action-info" onclick="viewDetails('critical-1')">Details</button>
+                    </div>
+                </div>
+
+                <div class="alert-item alert-high">
+                    <div class="alert-header">
+                        <div class="alert-title">🟠 HIGH: Crowd Surge Detected</div>
+                        <div class="alert-time">5 min ago</div>
+                    </div>
+                    <div class="alert-description">
+                        Main Stage area experiencing rapid crowd buildup. Density increased by 40% in last 3 minutes.
+                    </div>
+                    <div class="alert-actions">
+                        <button class="action-btn action-resolve" onclick="resolveAlert('high-1')">Deploy Staff</button>
+                        <button class="action-btn action-info" onclick="viewDetails('high-1')">Monitor</button>
+                    </div>
+                </div>
+
+                <div class="alert-item alert-medium">
+                    <div class="alert-header">
+                        <div class="alert-title">🟡 MEDIUM: Uneven Distribution</div>
+                        <div class="alert-time">8 min ago</div>
+                    </div>
+                    <div class="alert-description">
+                        Food Court area showing 70% capacity while nearby zones are underutilized. Consider crowd redirection.
+                    </div>
+                    <div class="alert-actions">
+                        <button class="action-btn action-resolve" onclick="resolveAlert('medium-1')">Send Announcement</button>
+                        <button class="action-btn action-info" onclick="viewDetails('medium-1')">Details</button>
+                    </div>
+                </div>
+
+                <div class="alert-item alert-medium">
+                    <div class="alert-header">
+                        <div class="alert-title">🟡 MEDIUM: Weather Alert</div>
+                        <div class="alert-time">12 min ago</div>
+                    </div>
+                    <div class="alert-description">
+                        Heavy rain forecast in 20 minutes. Recommend moving outdoor crowds to covered areas.
+                    </div>
+                    <div class="alert-actions">
+                        <button class="action-btn action-resolve" onclick="resolveAlert('weather-1')">Issue Advisory</button>
+                        <button class="action-btn action-info" onclick="viewDetails('weather-1')">Weather Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Controls -->
+        <div class="controls-section">
+            <h3 style="margin-bottom: 25px; font-size: 1.5rem; font-weight: 700; text-align: center;">Emergency Response Controls</h3>
+            <div class="controls-grid">
+                <div class="control-card">
+                    <div class="control-icon">🚨</div>
+                    <h4 class="control-title">Emergency Broadcast</h4>
+                    <p class="control-description">Send immediate audio announcements to all zones in multiple languages</p>
+                    <button class="control-btn" onclick="openEmergencyBroadcast()">Activate Broadcast</button>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-icon">🚪</div>
+                    <h4 class="control-title">Emergency Exits</h4>
+                    <p class="control-description">Monitor and control emergency exit access and capacity limits</p>
+                    <button class="control-btn" onclick="manageExits()">Manage Exits</button>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-icon">🚁</div>
+                    <h4 class="control-title">Emergency Services</h4>
+                    <p class="control-description">Direct contact with police, medical, and fire department services</p>
+                    <button class="control-btn" onclick="contactEmergencyServices()">Contact Services</button>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-icon">📱</div>
+                    <h4 class="control-title">Mass Notification</h4>
+                    <p class="control-description">Send SMS alerts to registered attendees and staff members</p>
+                    <button class="control-btn" onclick="sendMassNotification()">Send SMS Alert</button>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-icon">🔄</div>
+                    <h4 class="control-title">Crowd Redirection</h4>
+                    <p class="control-description">AI-powered suggestions for optimal crowd flow and distribution</p>
+                    <button class="control-btn" onclick="activateCrowdRedirection()">Optimize Flow</button>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-icon">📊</div>
+                    <h4 class="control-title">Predictive Analysis</h4>
+                    <p class="control-description">AI forecasting for next 10-15 minutes based on current trends</p>
+                    <button class="control-btn" onclick="viewPredictions()">View Forecast</button>
+                </div>
+            </div>
+
+            <!-- Audio Controls -->
+            <div class="audio-controls">
+                <h4 class="audio-title">🔊 Multi-Language Audio Announcements</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                    <select class="language-select" id="languageSelect">
+                        <option value="en">English</option>
+                        <option value="hi">हिंदी (Hindi)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="te">తెలుగు (Telugu)</option>
+                        <option value="bn">বাংলা (Bengali)</option>
+                        <option value="gu">ગુજરાતી (Gujarati)</option>
+                        <option value="mr">मराठी (Marathi)</option>
+                    </select>
+                    <button class="announce-btn" onclick="makeAnnouncement('evacuation')">Evacuation Alert</button>
+                    <button class="announce-btn" onclick="makeAnnouncement('redirect')">Crowd Redirect</button>
+                    <button class="announce-btn" onclick="makeAnnouncement('weather')">Weather Advisory</button>
+                    <button class="announce-btn" onclick="makeAnnouncement('custom')">Custom Message</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Protocols -->
+        <div class="emergency-protocols">
+            <div class="protocol-card">
+                <span class="protocol-level">LEVEL 1</span>
+                <h4 class="protocol-title">Crowd Density Warning</h4>
+                <ul class="protocol-steps">
+                    <li>AI detects 70%+ capacity in zone</li>
+                    <li>Automatic audio announcement in local language</li>
+                    <li>Digital signage updates with alternate routes</li>
+                    <li>Staff notification for crowd guidance</li>
+                    <li>Monitor situation for 5 minutes</li>
+                </ul>
+            </div>
+
+            <div class="protocol-card">
+                <span class="protocol-level">LEVEL 2</span>
+                <h4 class="protocol-title">Emergency Response</h4>
+                <ul class="protocol-steps">
+                    <li>85%+ capacity or blocked exit detected</li>
+                    <li>Immediate staff deployment to affected zone</li>
+                    <li>Emergency broadcast in multiple languages</li>
+                    <li>Alternative route guidance activation</li>
+                    <li>Emergency services pre-alerting</li>
+                    <li>Real-time capacity monitoring</li>
+                </ul>
+            </div>
+
+            <div class="protocol-card">
+                <span class="protocol-level">LEVEL 3</span>
+                <h4 class="protocol-title">Critical Evacuation</h4>
+                <ul class="protocol-steps">
+                    <li>95%+ capacity or emergency detected</li>
+                    <li>Immediate emergency services activation</li>
+                    <li>Mass evacuation announcements</li>
+                    <li>All exit gates opened and monitored</li>
+                    <li>SMS alerts to all registered attendees</li>
+                    <li>Drone surveillance deployment</li>
+                    <li>Medical teams on standby</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="notification-toast" id="notificationToast">
+        <strong>🚨 New Critical Alert!</strong><br>
+        Exit Gate Zone requires immediate attention.
+    </div>
+
+    <script>
+        // Alert System Core Functions
+        let alertData = {
+            active: 5,
+            totalPeople: 2847,
+            responseTime: 43,
+            resolutionRate: 94
+        };
+
+        // Initialize the alert system
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAlertStats();
+            startRealTimeUpdates();
+            initializeVoiceSystem();
+            
+            // Show welcome notification
+            setTimeout(() => {
+                showNotification("Alert System Active - AI Monitoring Enabled", "success");
+            }, 1000);
+        });
+
+        // Update statistics in real-time
+        function updateAlertStats() {
+            // Simulate real-time data updates
+            const variations = [-2, -1, 0, 1, 2];
+            
+            alertData.totalPeople += variations[Math.floor(Math.random() * variations.length)];
+            alertData.responseTime += Math.floor(Math.random() * 10) - 5;
+            
+            document.getElementById('activeAlerts').textContent = alertData.active;
+            document.getElementById('totalPeople').textContent = alertData.totalPeople.toLocaleString();
+            document.getElementById('responseTime').textContent = Math.max(20, alertData.responseTime) + 's';
+            document.getElementById('resolutionRate').textContent = alertData.resolutionRate + '%';
+            document.getElementById('alertCount').textContent = alertData.active + ' Active';
+        }
+
+        // Start real-time updates
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                updateAlertStats();
+                updateZoneStatuses();
+            }, 5000);
+
+            // Simulate new alerts
+            setTimeout(() => {
+                simulateNewAlert();
+            }, 15000);
+        }
+
+        // Update zone statuses dynamically
+        function updateZoneStatuses() {
+            const zones = document.querySelectorAll('.zone');
+            zones.forEach(zone => {
+                const random = Math.random();
+                if (random > 0.9) {
+                    // Randomly change zone status
+                    const statuses = ['zone-safe', 'zone-warning', 'zone-danger'];
+                    const currentStatus = zone.classList[1];
+                    zone.classList.remove(currentStatus);
+                    
+                    const newStatus = statuses[Math.floor(Math.random() * statuses.length)];
+                    zone.classList.add(newStatus);
+                }
+            });
+        }
+
+        // Show zone details
+        function showZoneDetails(zoneId) {
+            const zoneData = {
+                1: { name: "Zone A - Entry Gate", capacity: 45, max: 500 },
+                2: { name: "Zone B - North Wing", capacity: 68, max: 400 },
+                3: { name: "Main Stage Area", capacity: 87, max: 1000 },
+                4: { name: "Zone C - South Wing", capacity: 52, max: 350 },
+                5: { name: "Exit Gate - Critical", capacity: 95, max: 600 },
+                6: { name: "Food Court Area", capacity: 74, max: 450 },
+                7: { name: "Zone D - Rest Area", capacity: 38, max: 300 }
+            };
+
+            const zone = zoneData[zoneId];
+            showNotification(
+                `${zone.name}: ${zone.capacity}% capacity (${Math.floor(zone.max * zone.capacity / 100)}/${zone.max} people)`,
+                zone.capacity > 80 ? "danger" : zone.capacity > 60 ? "warning" : "success"
+            );
+        }
+
+        // Alert management functions
+        function resolveAlert(alertId) {
+            showNotification(`Alert ${alertId} marked as resolved`, "success");
+            alertData.active = Math.max(0, alertData.active - 1);
+            updateAlertStats();
+            
+            // Remove alert from UI
+            event.target.closest('.alert-item').style.opacity = '0.5';
+            event.target.closest('.alert-item').style.transform = 'translateX(-20px)';
+            setTimeout(() => {
+                event.target.closest('.alert-item').remove();
+            }, 500);
+        }
+
+        function escalateAlert(alertId) {
+            showNotification(`Alert ${alertId} escalated to emergency services`, "danger");
+            contactEmergencyServices();
+        }
+
+        function viewDetails(alertId) {
+            showNotification(`Opening detailed view for alert ${alertId}`, "info");
+            // In a real system, this would open a detailed modal or new page
+        }
+
+        // Emergency control functions
+        function openEmergencyBroadcast() {
+            showNotification("Emergency broadcast system activated", "danger");
+            const message = prompt("Enter emergency message:");
+            if (message) {
+                makeAnnouncement('custom', message);
+            }
+        }
+
+        function manageExits() {
+            showNotification("Emergency exit management panel opened", "warning");
+            // Simulate exit management
+            const exits = ["North Exit: OPEN", "South Exit: OPEN", "Emergency Exit 1: BLOCKED", "Emergency Exit 2: OPEN"];
+            alert("Exit Status:\n\n" + exits.join('\n'));
+        }
+
+        function contactEmergencyServices() {
+            showNotification("Connecting to emergency services...", "danger");
+            setTimeout(() => {
+                showNotification("Emergency services have been notified and are responding", "success");
+            }, 2000);
+        }
+
+        function sendMassNotification() {
+            showNotification("Sending SMS alerts to 2,847 registered attendees...", "info");
+            setTimeout(() => {
+                showNotification("Mass SMS notification sent successfully", "success");
+            }, 3000);
+        }
+
+        function activateCrowdRedirection() {
+            showNotification("AI analyzing optimal crowd flow patterns...", "info");
+            setTimeout(() => {
+                showNotification("Crowd redirection plan activated - Digital signage updated", "success");
+                // Update zone recommendations
+                const recommendations = [
+                    "Redirect from Main Stage to Zone A and Zone D",
+                    "Close Food Court temporarily - guide to Zone C",
+                    "Open additional entry points for Zone B"
+                ];
+                alert("AI Recommendations:\n\n" + recommendations.join('\n\n'));
+            }, 2000);
+        }
+
+        function viewPredictions() {
+            showNotification("Loading AI predictive analysis...", "info");
+            setTimeout(() => {
+                const predictions = [
+                    "Next 5 mins: Main Stage crowd will increase by 15%",
+                    "Next 10 mins: Food Court congestion will peak",
+                    "Next 15 mins: Exit Gate pressure will normalize",
+                    "Weather impact: Light rain expected, recommend covered areas"
+                ];
+                alert("AI Predictions:\n\n" + predictions.join('\n\n'));
+            }, 1500);
+        }
+
+        // Multi-language audio system
+        function initializeVoiceSystem() {
+            // Check for speech synthesis support
+            if ('speechSynthesis' in window) {
+                console.log("Voice system initialized");
+            } else {
+                console.warn("Speech synthesis not supported");
+            }
+        }
+
+        function makeAnnouncement(type, customMessage = null) {
+            const language = document.getElementById('languageSelect').value;
+            const messages = {
+                evacuation: {
+                    en: "Attention: Please proceed calmly to the nearest emergency exit. Follow staff instructions.",
+                    hi: "ध्यान दें: कृपया शांति से निकटतम आपातकालीन निकास की ओर बढ़ें। स्टाफ के निर्देशों का पालन करें।",
+                    ta: "கவனம்: தயவுசெய்து அருகிலுள்ள அவசரகால வெளியேற்றத்திற்கு அமைதியாக செல்லுங்கள்.",
+                    te: "దృష్టి: దయచేసి సమీపంలోని అత్యవసర నిష్క్రమణకు ప్రశాంతంగా వెళ్లండి।"
+                },
+                redirect: {
+                    en: "For your safety, please move to the designated zones. Follow the green signs.",
+                    hi: "आपकी सुरक्षा के लिए, कृपया निर्धारित क्षेत्रों में जाएं। हरे संकेतों का पालन करें।",
+                    ta: "உங்கள் பாதுகாப்பிற்காக, தயவுசெய்து நியமிக்கப்பட்ட மண்டலங்களுக்கு செல்லுங்கள்.",
+                    te: "మీ భద్రత కోసం, దయచేసి నియమించబడిన మండలాలకు వెళ్లండి।"
+                },
+                weather: {
+                    en: "Weather alert: Rain expected. Please move to covered areas for your safety.",
+                    hi: "मौसम चेतावनी: बारिश की संभावना है। अपनी सुरक्षा के लिए कृपया ढके हुए क्षेत्रों में जाएं।",
+                    ta: "வானிலை எச்சரிக்கை: மழை எதிர்பார்க்கப்படுகிறது. பாதுகாப்பிற்காக மூடப்பட்ட இடங்களுக்கு செல்லுங்கள்.",
+                    te: "వాతావరణ హెచ్చరిక: వర్షం అంచనా. భద్రత కోసం దయచేసి కప్పబడిన ప్రాంతాలకు వెళ్లండి।"
+                }
+            };
+
+            let messageText;
+            if (customMessage) {
+                messageText = customMessage;
+            } else {
+                messageText = messages[type] ? messages[type][language] || messages[type]['en'] : "Announcement activated";
+            }
+
+            // Text-to-speech
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(messageText);
+                utterance.lang = language === 'en' ? 'en-US' : language + '-IN';
+                utterance.rate = 0.9;
+                utterance.volume = 0.8;
+                speechSynthesis.speak(utterance);
+            }
+
+            showNotification(`📢 Announcement made in ${language.toUpperCase()}: "${messageText.substring(0, 50)}..."`, "info");
+        }
+
+        // Simulate new alerts
+        function simulateNewAlert() {
+            const newAlerts = [
+                "🟡 New alert: Unusual crowd pattern detected in Zone B",
+                "🔴 Critical: Medical emergency reported in Main Stage area",
+                "🟠 High density alert: Food Court approaching capacity",
+                "🟡 Weather update: Strong winds detected, secure loose items"
+            ];
+
+            const randomAlert = newAlerts[Math.floor(Math.random() * newAlerts.length)];
+            showNotification(randomAlert, "warning");
+            
+            alertData.active++;
+            updateAlertStats();
+
+            // Schedule next alert
+            setTimeout(simulateNewAlert, Math.random() * 30000 + 15000);
+        }
+
+        // Notification system
+        function showNotification(message, type = "info") {
+            const toast = document.getElementById('notificationToast');
+            
+            // Set colors based on type
+            const colors = {
+                success: 'linear-gradient(135deg, #10b981, #059669)',
+                danger: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                warning: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                info: 'linear-gradient(135deg, #3b82f6, #2563eb)'
+            };
+
+            toast.style.background = colors[type] || colors.info;
+            toast.innerHTML = message;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+
+        // Keyboard shortcuts for emergency functions
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey) {
+                switch(e.key) {
+                    case 'E':
+                        e.preventDefault();
+                        openEmergencyBroadcast();
+                        break;
+                    case 'S':
+                        e.preventDefault();
+                        contactEmergencyServices();
+                        break;
+                    case 'R':
+                        e.preventDefault();
+                        activateCrowdRedirection();
+                        break;
+                }
+            }
+        });
+
+        // Auto-save alert preferences
+        function saveAlertPreferences() {
+            const preferences = {
+                language: document.getElementById('languageSelect').value,
+                autoEscalate: true,
+                notificationSound: true
+            };
+            localStorage.setItem('alertPreferences', JSON.stringify(preferences));
+        }
+
+        // Load saved preferences
+        function loadAlertPreferences() {
+            const saved = localStorage.getItem('alertPreferences');
+            if (saved) {
+                const preferences = JSON.parse(saved);
+                document.getElementById('languageSelect').value = preferences.language || 'en';
+            }
+        }
+
+        // Initialize preferences on load
+        document.addEventListener('DOMContentLoaded', loadAlertPreferences);
+        document.getElementById('languageSelect').addEventListener('change', saveAlertPreferences);
+
+        // Performance monitoring
+        function monitorSystemPerformance() {
+            const performanceData = {
+                alertProcessingTime: Math.random() * 100 + 50,
+                aiAnalysisTime: Math.random() * 200 + 100,
+                networkLatency: Math.random() * 50 + 20
+            };
+
+            console.log('System Performance:', performanceData);
+            return performanceData;
+        }
+
+        // Start performance monitoring
+        setInterval(monitorSystemPerformance, 10000);
+    </script>
+</body>
+</html>
