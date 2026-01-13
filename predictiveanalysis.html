@@ -1,0 +1,1689 @@
+82% of storage used … If you run out of space, you can't save to Drive or use Gmail. Get 30 GB of storage for ₹59 ₹0 for 1 month.
+predictiveanalysis.html
+predictiveanalytics.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Analytics - Crowd Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.1"/></svg>') repeat;
+            animation: sparkle 15s infinite linear;
+        }
+        
+        @keyframes sparkle {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-100px) rotate(360deg); }
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+        
+        .header-title {
+            color: white;
+        }
+        
+        .header-title h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header-title p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .time-selector {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .time-selector:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .live-indicator {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .main-chart-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .sidebar-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.7s;
+        }
+        
+        .chart-card:hover::before {
+            left: 100%;
+        }
+        
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .chart-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-icon {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-btn {
+            padding: 6px 12px;
+            border: 2px solid #e2e8f0;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-btn.active,
+        .chart-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container.small {
+            height: 250px;
+        }
+        
+        .chart-container.large {
+            height: 500px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .metric-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .metric-icon {
+            font-size: 1.5rem;
+            padding: 8px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        }
+        
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 5px;
+            animation: countUp 1s ease-out;
+        }
+        
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .metric-change {
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .change-positive {
+            color: #10b981;
+        }
+        
+        .change-negative {
+            color: #ef4444;
+        }
+        
+        .change-neutral {
+            color: #6b7280;
+        }
+        
+        .prediction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .prediction-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .prediction-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .prediction-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .prediction-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .prediction-confidence {
+            font-size: 0.8rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .prediction-content {
+            margin-bottom: 15px;
+        }
+        
+        .prediction-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .prediction-description {
+            color: #4a5568;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        .prediction-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .timeline-item {
+            text-align: center;
+            flex: 1;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 8px;
+            margin: 0 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .timeline-time {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .insights-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .insights-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .insights-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .insight-item {
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .insight-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .insight-high {
+            background: rgba(239, 68, 68, 0.05);
+            border-left-color: #ef4444;
+        }
+        
+        .insight-medium {
+            background: rgba(245, 158, 11, 0.05);
+            border-left-color: #f59e0b;
+        }
+        
+        .insight-low {
+            background: rgba(16, 185, 129, 0.05);
+            border-left-color: #10b981;
+        }
+        
+        .insight-priority {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .insight-high .insight-priority {
+            color: #ef4444;
+        }
+        
+        .insight-medium .insight-priority {
+            color: #f59e0b;
+        }
+        
+        .insight-low .insight-priority {
+            color: #10b981;
+        }
+        
+        .insight-text {
+            font-size: 0.95rem;
+            color: #4a5568;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .insight-action {
+            font-size: 0.85rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .controls-bar {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .control-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+        
+        .control-select {
+            padding: 8px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 3% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.4s ease-out;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        }
+        
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-50px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar-metrics {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header-controls {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+            
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                justify-content: center;
+            }
+            
+            .chart-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .chart-controls {
+                justify-content: center;
+            }
+            
+            .prediction-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button class="back-button" onclick="goBack()">← Back</button>
+            <div class="header-title">
+                <h1>📊 Predictive Analytics</h1>
+                <p>AI-Powered Crowd Flow Prediction & Analysis</p>
+            </div>
+        </div>
+        <div class="header-controls">
+            <select class="time-selector" id="timeRange" onchange="updateTimeRange()">
+                <option value="1h">Last 1 Hour</option>
+                <option value="6h">Last 6 Hours</option>
+                <option value="24h" selected>Last 24 Hours</option>
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+            </select>
+            <div class="live-indicator">
+                <div class="status-dot"></div>
+                <span>PREDICTING</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls-bar">
+            <div class="control-group">
+                <span class="control-label">Zone Filter:</span>
+                <select class="control-select" id="zoneFilter" onchange="updateZoneFilter()">
+                    <option value="all">All Zones</option>
+                    <option value="A">Zone A - Main Entry</option>
+                    <option value="B">Zone B - Food Court</option>
+                    <option value="C">Zone C - Exhibition Hall</option>
+                    <option value="D">Zone D - Parking Area</option>
+                    <option value="E">Zone E - Emergency Exits</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <span class="control-label">Prediction Model:</span>
+                <select class="control-select" id="modelType" onchange="updateModel()">
+                    <option value="lstm">LSTM Neural Network</option>
+                    <option value="arima">ARIMA Time Series</option>
+                    <option value="prophet">Facebook Prophet</option>
+                    <option value="ensemble">Ensemble Model</option>
+                </select>
+            </div>
+            <button class="refresh-btn" onclick="refreshData()">
+                <span>🔄</span>
+                Refresh Predictions
+            </button>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="main-chart-section">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <span class="chart-icon">📈</span>
+                            Crowd Flow Prediction
+                        </h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" onclick="switchChart('prediction')">Prediction</button>
+                            <button class="chart-btn" onclick="switchChart('historical')">Historical</button>
+                            <button class="chart-btn" onclick="switchChart('comparison')">Compare</button>
+                        </div>
+                    </div>
+                    <div class="chart-container large">
+                        <canvas id="mainPredictionChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">
+                            <span class="chart-icon">🎯</span>
+                            Zone-wise Analysis
+                        </h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" onclick="switchZoneChart('occupancy')">Occupancy</button>
+                            <button class="chart-btn" onclick="switchZoneChart('flow')">Flow Rate</button>
+                            <button class="chart-btn" onclick="switchZoneChart('density')">Density</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="zoneAnalysisChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-metrics">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Current Occupancy</span>
+                        <span class="metric-icon">👥</span>
+                    </div>
+                    <div class="metric-value" id="currentOccupancy">2,847</div>
+                    <div class="metric-change change-positive">
+                        <span>↗</span>
+                        <span>+12.5% vs predicted</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Peak Time Prediction</span>
+                        <span class="metric-icon">⏰</span>
+                    </div>
+                    <div class="metric-value" id="peakTime">14:30</div>
+                    <div class="metric-change change-neutral">
+                        <span>📅</span>
+                        <span>Today, in 2.5 hours</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Prediction Accuracy</span>
+                        <span class="metric-icon">🎯</span>
+                    </div>
+                    <div class="metric-value" id="accuracy">94.2%</div>
+                    <div class="metric-change change-positive">
+                        <span>↗</span>
+                        <span>+2.1% this week</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Risk Level</span>
+                        <span class="metric-icon">⚠️</span>
+                    </div>
+                    <div class="metric-value" id="riskLevel" style="color: #f59e0b;">Medium</div>
+                    <div class="metric-change change-negative">
+                        <span>📊</span>
+                        <span>Zone B approaching limit</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="prediction-grid">
+            <div class="prediction-card">
+                <div class="prediction-header">
+                    <h4 class="prediction-title">Next Hour Forecast</h4>
+                    <span class="prediction-confidence">96% Confidence</span>
+                </div>
+                <div class="prediction-content">
+                    <div class="prediction-value" style="color: #f59e0b;">3,200 people</div>
+                    <p class="prediction-description">
+                        Expected increase of 350 people in the next hour. Zone B (Food Court) will reach 85% capacity.
+                    </p>
+                    <div class="prediction-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-time">+15min</div>
+                            <div class="timeline-value">2,950</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">+30min</div>
+                            <div class="timeline-value">3,100</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">+45min</div>
+                            <div class="timeline-value">3,180</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">+60min</div>
+                            <div class="timeline-value">3,200</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="prediction-card">
+                <div class="prediction-header">
+                    <h4 class="prediction-title">Peak Crowd Prediction</h4>
+                    <span class="prediction-confidence">89% Confidence</span>
+                </div>
+                <div class="prediction-content">
+                    <div class="prediction-value" style="color: #ef4444;">4,850 people</div>
+                    <p class="prediction-description">
+                        Today's peak expected at 2:30 PM. Critical threshold in Zone B requires attention.
+                    </p>
+                    <div class="prediction-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-time">12:00</div>
+                            <div class="timeline-value">3,800</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">14:30</div>
+                            <div class="timeline-value">4,850</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">17:00</div>
+                            <div class="timeline-value">4,200</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">19:00</div>
+                            <div class="timeline-value">2,900</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="prediction-card">
+                <div class="prediction-header">
+                    <h4 class="prediction-title">Weekly Trend Analysis</h4>
+                    <span class="prediction-confidence">92% Confidence</span>
+                </div>
+                <div class="prediction-content">
+                    <div class="prediction-value" style="color: #10b981;">+15% Growth</div>
+                    <p class="prediction-description">
+                        Weekly average shows steady increase. Weekend peaks 25% higher than weekdays.
+                    </p>
+                    <div class="prediction-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-time">Mon</div>
+                            <div class="timeline-value">3,200</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">Wed</div>
+                            <div class="timeline-value">3,800</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">Fri</div>
+                            <div class="timeline-value">4,100</div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-time">Sat</div>
+                            <div class="timeline-value">5,200</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="insights-section">
+            <div class="insights-header">
+                <span class="chart-icon">🧠</span>
+                <h3 class="insights-title">AI Insights & Recommendations</h3>
+            </div>
+            <div class="insights-grid">
+                <div class="insight-item insight-high" onclick="showInsightDetails('crowd-buildup')">
+                    <div class="insight-priority">High Priority</div>
+                    <div class="insight-text">
+                        Significant crowd buildup predicted in Food Court area between 2:00-3:00 PM today.
+                    </div>
+                    <div class="insight-action">Recommended: Deploy 2 additional staff members</div>
+                </div>
+                
+                <div class="insight-item insight-medium" onclick="showInsightDetails('flow-optimization')">
+                    <div class="insight-priority">Medium Priority</div>
+                    <div class="insight-text">
+                        Entry flow can be optimized by opening Gate C during peak hours (12:00-4:00 PM).
+                    </div>
+                    <div class="insight-action">Expected: 15% improvement in flow rate</div>
+                </div>
+                
+                <div class="insight-item insight-low" onclick="showInsightDetails('pattern-analysis')">
+                    <div class="insight-priority">Low Priority</div>
+                    <div class="insight-text">
+                        Historical pattern shows 20% increase in weekend attendance compared to weekdays.
+                    </div>
+                    <div class="insight-action">Consider: Weekend-specific staffing adjustments</div>
+                </div>
+                
+                <div class="insight-item insight-high" onclick="showInsightDetails('capacity-warning')">
+                    <div class="insight-priority">High Priority</div>
+                    <div class="insight-text">
+                        Zone B approaching 85% capacity threshold. Risk of overcrowding in next 45 minutes.
+                    </div>
+                    <div class="insight-action">Action: Activate crowd diversion protocol</div>
+                </div>
+                
+                <div class="insight-item insight-medium" onclick="showInsightDetails('weather-impact')">
+                    <div class="insight-priority">Medium Priority</div>
+                    <div class="insight-text">
+                        Weather forecast indicates rain at 3 PM. Expect 30% increase in indoor zone occupancy.
+                    </div>
+                    <div class="insight-action">Prepare: Indoor crowd management measures</div>
+                </div>
+                
+                <div class="insight-item insight-low" onclick="showInsightDetails('maintenance-window')">
+                    <div class="insight-priority">Low Priority</div>
+                    <div class="insight-text">
+                        Optimal maintenance window identified: Tomorrow 6:00-8:00 AM (lowest predicted occupancy).
+                    </div>
+                    <div class="insight-action">Schedule: Non-critical maintenance tasks</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insight Details Modal -->
+    <div id="insightModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Insight Details</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Modal content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let charts = {};
+        let currentTimeRange = '24h';
+        let currentZone = 'all';
+        let currentModel = 'lstm';
+        let predictionData = {};
+        let isLoading = false;
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadPredictionData();
+            startRealTimeUpdates();
+            setupEventListeners();
+        });
+
+        // Initialize all charts
+        function initializeCharts() {
+            // Main prediction chart
+            const ctx1 = document.getElementById('mainPredictionChart').getContext('2d');
+            charts.prediction = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: generateTimeLabels(24),
+                    datasets: [{
+                        label: 'Actual Count',
+                        data: generateHistoricalData(24),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Predicted Count',
+                        data: generatePredictionData(24),
+                        borderColor: '#f093fb',
+                        backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                        borderWidth: 3,
+                        borderDash: [5, 5],
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Confidence Interval',
+                        data: generateConfidenceData(24),
+                        borderColor: 'rgba(245, 158, 11, 0.3)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                        borderWidth: 1,
+                        fill: '+1',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#2d3748',
+                            bodyColor: '#4a5568',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            },
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'People Count'
+                            },
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+
+            // Zone analysis chart
+            const ctx2 = document.getElementById('zoneAnalysisChart').getContext('2d');
+            charts.zoneAnalysis = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Zone A', 'Zone B', 'Zone C', 'Zone D', 'Zone E'],
+                    datasets: [{
+                        label: 'Current Occupancy',
+                        data: [65, 89, 45, 72, 34],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(16, 185, 129, 0.7)'
+                        ],
+                        borderColor: [
+                            '#10b981',
+                            '#ef4444',
+                            '#3b82f6',
+                            '#f59e0b',
+                            '#10b981'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }, {
+                        label: 'Predicted Peak',
+                        data: [78, 95, 68, 85, 52],
+                        backgroundColor: 'rgba(102, 126, 234, 0.4)',
+                        borderColor: '#667eea',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#2d3748',
+                            bodyColor: '#4a5568',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Occupancy %'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Generate time labels
+        function generateTimeLabels(hours) {
+            const labels = [];
+            const now = new Date();
+            for (let i = -hours; i <= 6; i++) {
+                const time = new Date(now.getTime() + i * 60 * 60 * 1000);
+                labels.push(time.getHours().toString().padStart(2, '0') + ':00');
+            }
+            return labels;
+        }
+
+        // Generate historical data
+        function generateHistoricalData(hours) {
+            const data = [];
+            for (let i = -hours; i <= 0; i++) {
+                const baseValue = 2500 + Math.sin(i * 0.3) * 1000;
+                const noise = (Math.random() - 0.5) * 400;
+                data.push(Math.max(0, Math.round(baseValue + noise)));
+            }
+            // Add null values for future hours
+            for (let i = 1; i <= 6; i++) {
+                data.push(null);
+            }
+            return data;
+        }
+
+        // Generate prediction data
+        function generatePredictionData(hours) {
+            const data = [];
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            // Add null values for historical hours
+            for (let i = -hours; i <= 0; i++) {
+                data.push(null);
+            }
+            
+            // Generate predictions for future hours
+            for (let i = 1; i <= 6; i++) {
+                const hour = (currentHour + i) % 24;
+                let baseValue;
+                
+                if (hour >= 6 && hour < 10) baseValue = 1500 + hour * 200;
+                else if (hour >= 10 && hour < 14) baseValue = 3000 + (hour - 10) * 300;
+                else if (hour >= 14 && hour < 18) baseValue = 4500 - (hour - 14) * 200;
+                else if (hour >= 18 && hour < 22) baseValue = 3700 - (hour - 18) * 400;
+                else baseValue = Math.max(500, 2100 - (hour > 22 ? hour - 22 : hour + 2) * 150);
+                
+                const confidence = 0.95 - (i * 0.05);
+                const variance = (1 - confidence) * 500;
+                data.push(Math.round(baseValue + (Math.random() - 0.5) * variance));
+            }
+            return data;
+        }
+
+        // Generate confidence interval data
+        function generateConfidenceData(hours) {
+            const data = [];
+            // Add null values for historical hours
+            for (let i = -hours; i <= 0; i++) {
+                data.push(null);
+            }
+            // Add confidence intervals for predictions
+            const predictions = generatePredictionData(hours).slice(-6);
+            predictions.forEach((pred, i) => {
+                if (pred !== null) {
+                    data.push(pred + 200 + i * 50);
+                }
+            });
+            return data;
+        }
+
+        // Load prediction data
+        function loadPredictionData() {
+            // Simulate API call
+            predictionData = {
+                accuracy: 94.2,
+                nextHourPrediction: {
+                    count: 3200,
+                    confidence: 96,
+                    risk: 'medium'
+                },
+                peakPrediction: {
+                    time: '14:30',
+                    count: 4850,
+                    confidence: 89
+                },
+                weeklyTrend: {
+                    growth: 15,
+                    pattern: 'increasing'
+                }
+            };
+            
+            updateMetrics();
+        }
+
+        // Update metrics display
+        function updateMetrics() {
+            document.getElementById('currentOccupancy').textContent = '2,847';
+            document.getElementById('peakTime').textContent = predictionData.peakPrediction.time;
+            document.getElementById('accuracy').textContent = predictionData.accuracy + '%';
+            
+            const riskLevel = predictionData.nextHourPrediction.risk;
+            const riskElement = document.getElementById('riskLevel');
+            riskElement.textContent = riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1);
+            
+            // Update risk color
+            const riskColors = {
+                low: '#10b981',
+                medium: '#f59e0b',
+                high: '#ef4444'
+            };
+            riskElement.style.color = riskColors[riskLevel];
+        }
+
+        // Chart switching functions
+        function switchChart(type) {
+            // Update button states
+            document.querySelectorAll('.chart-controls .chart-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update chart data based on type
+            if (type === 'prediction') {
+                updatePredictionChart();
+            } else if (type === 'historical') {
+                updateHistoricalChart();
+            } else if (type === 'comparison') {
+                updateComparisonChart();
+            }
+        }
+
+        function switchZoneChart(type) {
+            // Update button states
+            const zoneControls = document.querySelectorAll('.chart-card:nth-child(2) .chart-btn');
+            zoneControls.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update zone chart data
+            updateZoneChart(type);
+        }
+
+        // Update chart functions
+        function updatePredictionChart() {
+            const chart = charts.prediction;
+            chart.data.datasets[0].data = generateHistoricalData(24);
+            chart.data.datasets[1].data = generatePredictionData(24);
+            chart.data.datasets[2].data = generateConfidenceData(24);
+            chart.update('active');
+        }
+
+        function updateHistoricalChart() {
+            const chart = charts.prediction;
+            chart.data.datasets[0].data = generateHistoricalData(24);
+            chart.data.datasets[1].data = new Array(chart.data.labels.length).fill(null);
+            chart.data.datasets[2].data = new Array(chart.data.labels.length).fill(null);
+            chart.update('active');
+        }
+
+        function updateComparisonChart() {
+            const chart = charts.prediction;
+            const historical = generateHistoricalData(24);
+            const predicted = generatePredictionData(24);
+            
+            chart.data.datasets[0].data = historical;
+            chart.data.datasets[1].data = predicted;
+            chart.data.datasets[2].data = generateConfidenceData(24);
+            chart.update('active');
+        }
+
+        function updateZoneChart(type) {
+            const chart = charts.zoneAnalysis;
+            let data1, data2, label1, label2;
+            
+            if (type === 'occupancy') {
+                data1 = [65, 89, 45, 72, 34];
+                data2 = [78, 95, 68, 85, 52];
+                label1 = 'Current Occupancy';
+                label2 = 'Predicted Peak';
+            } else if (type === 'flow') {
+                data1 = [120, 89, 156, 98, 67];
+                data2 = [145, 110, 178, 125, 89];
+                label1 = 'Current Flow Rate';
+                label2 = 'Predicted Flow Rate';
+            } else if (type === 'density') {
+                data1 = [2.3, 4.1, 1.8, 2.9, 1.2];
+                data2 = [2.8, 4.8, 2.5, 3.4, 1.8];
+                label1 = 'Current Density';
+                label2 = 'Predicted Density';
+            }
+            
+            chart.data.datasets[0].data = data1;
+            chart.data.datasets[0].label = label1;
+            chart.data.datasets[1].data = data2;
+            chart.data.datasets[1].label = label2;
+            chart.update('active');
+        }
+
+        // Control functions
+        function updateTimeRange() {
+            currentTimeRange = document.getElementById('timeRange').value;
+            refreshCharts();
+        }
+
+        function updateZoneFilter() {
+            currentZone = document.getElementById('zoneFilter').value;
+            refreshCharts();
+        }
+
+        function updateModel() {
+            currentModel = document.getElementById('modelType').value;
+            showModelChangeNotification();
+            setTimeout(refreshCharts, 1500);
+        }
+
+        function refreshData() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            const btn = document.querySelector('.refresh-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<div class="loading-spinner"></div> Updating...';
+            
+            setTimeout(() => {
+                loadPredictionData();
+                refreshCharts();
+                isLoading = false;
+                btn.innerHTML = originalHTML;
+                showNotification('Predictions updated successfully', 'success');
+            }, 2000);
+        }
+
+        function refreshCharts() {
+            // Regenerate data for all charts
+            Object.keys(charts).forEach(key => {
+                if (key === 'prediction') {
+                    updatePredictionChart();
+                } else if (key === 'zoneAnalysis') {
+                    updateZoneChart('occupancy');
+                }
+            });
+        }
+
+        // Modal functions
+        function showInsightDetails(insightType) {
+            const modal = document.getElementById('insightModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            const insights = {
+                'crowd-buildup': {
+                    title: 'Crowd Buildup Analysis - Food Court Area',
+                    content: `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #ef4444; margin-bottom: 10px;">🚨 High Priority Alert</h4>
+                            <p style="line-height: 1.6; margin-bottom: 15px;">
+                                Our AI model has detected a significant crowd buildup pattern that will occur in the Food Court area (Zone B) between 2:00-3:00 PM today.
+                            </p>
+                        </div>
+                        
+                        <div style="background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 10px; border-left: 4px solid #ef4444; margin-bottom: 20px;">
+                            <h5 style="color: #2d3748; margin-bottom: 10px;">Predicted Impact:</h5>
+                            <ul style="margin-left: 20px; line-height: 1.6;">
+                                <li>Peak occupancy: 95% of zone capacity</li>
+                                <li>Crowd density: 4.2 people per m²</li>
+                                <li>Wait times: Increase by 180%</li>
+                                <li>Risk level: Critical</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 10px; border-left: 4px solid #10b981; margin-bottom: 20px;">
+                            <h5 style="color: #2d3748; margin-bottom: 10px;">Recommended Actions:</h5>
+                            <ul style="margin-left: 20px; line-height: 1.6;">
+                                <li>Deploy 2 additional staff members by 1:45 PM</li>
+                                <li>Activate alternative dining areas</li>
+                                <li>Implement queue management system</li>
+                                <li>Send proactive notifications to visitors</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;" onclick="implementAction('crowd-buildup')">
+                                Implement Actions
+                            </button>
+                            <button style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer;" onclick="closeModal()">
+                                Close
+                            </button>
+                        </div>
+                    `
+                },
+                'flow-optimization': {
+                    title: 'Flow Optimization - Gate C Recommendation',
+                    content: `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #f59e0b; margin-bottom: 10px;">⚠️ Medium Priority Recommendation</h4>
+                            <p style="line-height: 1.6; margin-bottom: 15px;">
+                                Analysis of entry flow patterns suggests opening Gate C during peak hours will significantly improve visitor experience.
+                            </p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <div style="background: rgba(0,0,0,0.02); padding: 15px; border-radius: 10px;">
+                                <h5 style="margin-bottom: 10px;">Current Situation</h5>
+                                <ul style="margin-left: 20px; line-height: 1.6; font-size: 0.9rem;">
+                                    <li>Gates A & B handling 100% load</li>
+                                    <li>Average wait time: 8.5 minutes</li>
+                                    <li>Congestion score: 7.2/10</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 10px;">
+                                <h5 style="margin-bottom: 10px;">With Gate C Active</h5>
+                                <ul style="margin-left: 20px; line-height: 1.6; font-size: 0.9rem;">
+                                    <li>Load distributed across 3 gates</li>
+                                    <li>Average wait time: 3.2 minutes</li>
+                                    <li>Congestion score: 4.1/10</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 2rem; font-weight: 700; color: #10b981; margin-bottom: 5px;">15%</div>
+                            <div style="color: #4a5568;">Expected improvement in overall flow rate</div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer;" onclick="implementAction('flow-optimization')">
+                                Schedule Gate Opening
+                            </button>
+                            <button style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer;" onclick="closeModal()">
+                                Close
+                            </button>
+                        </div>
+                    `
+                },
+                'capacity-warning': {
+                    title: 'Capacity Warning - Zone B Critical Threshold',
+                    content: `
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="color: #ef4444; margin-bottom: 10px;">🚨 Critical Alert</h4>
+                            <p style="line-height: 1.6; margin-bottom: 15px;">
+                                Zone B is rapidly approaching the 85% capacity threshold with risk of overcrowding in the next 45 minutes.
+                            </p>
+                        </div>
+                        
+                        <div style="background: rgba(239, 68, 68, 0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                            <div style="font-size: 3rem; font-weight: 700; color: #ef4444; margin-bottom: 10px;">89%</div>
+                            <div style="font-size: 1.2rem; color: #2d3748; margin-bottom: 5px;">Current Occupancy</div>
+                            <div style="font-size: 0.9rem; color: #6b7280;">Threshold: 85% | Critical: 95%</div>
+                        </div>
+                        
+                        <div style="background: rgba(245, 158, 11, 0.05); padding: 15px; border-radius: 10px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
+                            <h5 style="color: #2d3748; margin-bottom: 10px;">Immediate Actions Required:</h5>
+                            <ul style="margin-left: 20px; line-height: 1.6;">
+                                <li>Activate crowd diversion protocol</li>
+                                <li>Direct new visitors to Zones C and D</li>
+                                <li>Alert security personnel</li>
+                                <li>Prepare emergency procedures</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;" onclick="implementAction('emergency-protocol')">
+                                Activate Protocol
+                            </button>
+                            <button style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 8px; cursor: pointer;" onclick="implementAction('diversion')">
+                                Start Diversion
+                            </button>
+                        </div>
+                    `
+                }
+            };
+            
+            const insight = insights[insightType] || {
+                title: 'Insight Details',
+                content: '<p>Details not available for this insight.</p>'
+            };
+            
+            modalTitle.textContent = insight.title;
+            modalBody.innerHTML = insight.content;
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('insightModal').style.display = 'none';
+        }
+
+        function implementAction(actionType) {
+            showNotification('Action implemented successfully!', 'success');
+            closeModal();
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+                z-index: 1001;
+                border-left: 4px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function showModelChangeNotification() {
+            const modelNames = {
+                lstm: 'LSTM Neural Network',
+                arima: 'ARIMA Time Series',
+                prophet: 'Facebook Prophet',
+                ensemble: 'Ensemble Model'
+            };
+            
+            showNotification(`Switching to ${modelNames[currentModel]} model...`, 'info');
+        }
+
+        // Real-time updates
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                if (!isLoading) {
+                    // Update current metrics with small variations
+                    const occupancyElement = document.getElementById('currentOccupancy');
+                    const currentValue = parseInt(occupancyElement.textContent.replace(',', ''));
+                    const variation = Math.floor(Math.random() * 40) - 20;
+                    const newValue = Math.max(0, currentValue + variation);
+                    occupancyElement.textContent = newValue.toLocaleString();
+                    
+                    // Update accuracy occasionally
+                    if (Math.random() < 0.2) {
+                        const accuracyElement = document.getElementById('accuracy');
+                        const currentAccuracy = parseFloat(accuracyElement.textContent);
+                        const newAccuracy = Math.max(85, Math.min(99, currentAccuracy + (Math.random() - 0.5) * 0.5));
+                        accuracyElement.textContent = newAccuracy.toFixed(1) + '%';
+                    }
+                }
+            }, 5000);
+        }
+
+        // Event listeners
+        function setupEventListeners() {
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const modal = document.getElementById('insightModal');
+                if (event.target === modal) {
+                    closeModal();
+                }
+            };
+            
+            // Add CSS for animations
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Navigation
+        // Navigation
+function goBack() {
+    window.location.href = 'analyticsdashboard.html';
+}
+    </script>
+</body>
+</html>
