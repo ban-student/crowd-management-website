@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Monitoring - Crowd Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1em;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .card.full-width {
+            grid-column: span 3;
+        }
+        
+        .card.half-width {
+            grid-column: span 2;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        
+        .weather-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .temperature {
+            font-size: 3.5em;
+            font-weight: bold;
+        }
+        
+        .weather-icon {
+            font-size: 4em;
+        }
+        
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .weather-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .crowd-risk-indicator {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .risk-low { background: rgba(76, 175, 80, 0.3); }
+        .risk-medium { background: rgba(255, 152, 0, 0.3); }
+        .risk-high { background: rgba(244, 67, 54, 0.3); }
+        .risk-extreme { background: rgba(156, 39, 176, 0.3); }
+        
+        .alerts-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+        
+        .alert-critical { border-left-color: #f44336; }
+        .alert-warning { border-left-color: #ff9800; }
+        .alert-info { border-left-color: #2196f3; }
+        
+        .alert-icon {
+            font-size: 1.5em;
+            min-width: 30px;
+        }
+        
+        .forecast-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .forecast-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .forecast-time {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .forecast-icon {
+            font-size: 2em;
+            margin: 10px 0;
+        }
+        
+        .forecast-temp {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .forecast-desc {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+        }
+        
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 15px;
+            z-index: 1;
+        }
+        
+        .location-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online { background: #4caf50; }
+        .status-offline { background: #f44336; }
+        .status-warning { background: #ff9800; }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .crowd-impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .impact-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        
+        .impact-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .impact-label {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .card.full-width,
+            .card.half-width {
+                grid-column: span 1;
+            }
+        }
+        
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+        
+        .leaflet-popup-content {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Climate Monitoring Dashboard</h1>
+        <p class="subtitle">Real-time weather analysis for intelligent crowd management</p>
+        <div class="location-info">
+            <span class="status-indicator" id="locationStatus"></span>
+            <span id="currentLocation">Detecting location...</span>
+            <button class="btn" onclick="refreshLocation()">Refresh Location</button>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- Current Weather Card -->
+        <div class="card">
+            <div class="card-header">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                Current Weather
+            </div>
+            <div class="weather-display">
+                <div>
+                    <div class="temperature" id="currentTemp">--°C</div>
+                    <div id="currentCondition">Loading...</div>
+                </div>
+                <div class="weather-icon" id="weatherIcon">⛅</div>
+            </div>
+            <div class="weather-details">
+                <div class="weather-item">
+                    <span>Humidity</span>
+                    <span id="humidity">--%</span>
+                </div>
+                <div class="weather-item">
+                    <span>Wind Speed</span>
+                    <span id="windSpeed">-- km/h</span>
+                </div>
+                <div class="weather-item">
+                    <span>Pressure</span>
+                    <span id="pressure">-- hPa</span>
+                </div>
+                <div class="weather-item">
+                    <span>UV Index</span>
+                    <span id="uvIndex">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crowd Risk Assessment -->
+        <div class="card">
+            <div class="card-header">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                Crowd Risk Level
+            </div>
+            <div class="crowd-risk-indicator" id="crowdRiskIndicator">
+                ANALYZING...
+            </div>
+            <div class="crowd-impact-grid">
+                <div class="impact-item">
+                    <div class="impact-value" id="comfortIndex">--</div>
+                    <div class="impact-label">Comfort Index</div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-value" id="heatStress">--</div>
+                    <div class="impact-label">Heat Stress</div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-value" id="visibilityImpact">--</div>
+                    <div class="impact-label">Visibility</div>
+                </div>
+                <div class="impact-item">
+                    <div class="impact-value" id="evacuation">--</div>
+                    <div class="impact-label">Evacuation Risk</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Climate Alerts -->
+        <div class="card">
+            <div class="card-header">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+                Climate Alerts
+            </div>
+            <div class="alerts-container" id="alertsContainer">
+                <div class="loading"></div>
+            </div>
+        </div>
+
+        <!-- Hourly Forecast -->
+        <div class="card full-width">
+            <div class="card-header">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9a8.994 8.994 0 0 0 7.03-14.61z"/>
+                </svg>
+                24-Hour Forecast Impact Analysis
+            </div>
+            <div class="forecast-container" id="forecastContainer">
+                <div class="loading"></div>
+            </div>
+        </div>
+
+        <!-- Interactive Map -->
+        <div class="card half-width">
+            <div class="card-header">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                Weather Risk Map
+            </div>
+            <div id="map"></div>
+        </div>
+
+        <!-- Environmental Monitoring -->
+        <div class="card">
+            <div class="card-header">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                </svg>
+                Air Quality & Environment
+            </div>
+            <div class="weather-details">
+                <div class="weather-item">
+                    <span>Air Quality</span>
+                    <span id="airQuality">Loading...</span>
+                </div>
+                <div class="weather-item">
+                    <span>Cloud Cover</span>
+                    <span id="cloudCover">--%</span>
+                </div>
+                <div class="weather-item">
+                    <span>Precipitation</span>
+                    <span id="precipitation">-- mm</span>
+                </div>
+                <div class="weather-item">
+                    <span>Dew Point</span>
+                    <span id="dewPoint">--°C</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        // Configuration
+        // Replace the JavaScript section in your climatemonitoring.html with this improved version
+
+// Configuration - Dynamic API URL detection
+let API_BASE_URL = 'http://localhost:5000/api';
+
+// Try to detect if we're running on a different host
+if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    API_BASE_URL = `http://${window.location.hostname}:5000/api`;
+}
+
+let currentLocation = null;
+let map = null;
+let weatherLayer = null;
+
+// Weather condition icons mapping
+const weatherIcons = {
+    0: '☀️',    // Clear sky
+    1: '🌤️',    // Mainly clear
+    2: '⛅',    // Partly cloudy
+    3: '☁️',    // Overcast
+    45: '🌫️',   // Fog
+    48: '🌫️',   // Depositing rime fog
+    51: '🌦️',   // Drizzle: Light
+    53: '🌦️',   // Drizzle: Moderate
+    55: '🌦️',   // Drizzle: Dense
+    61: '🌧️',   // Rain: Slight
+    63: '🌧️',   // Rain: Moderate
+    65: '🌧️',   // Rain: Heavy
+    71: '🌨️',   // Snow fall: Slight
+    73: '🌨️',   // Snow fall: Moderate
+    75: '❄️',    // Snow fall: Heavy
+    77: '🌨️',   // Snow grains
+    80: '🌦️',   // Rain showers: Slight
+    81: '🌧️',   // Rain showers: Moderate
+    82: '🌧️',   // Rain showers: Violent
+    85: '🌨️',   // Snow showers: Slight
+    86: '❄️',    // Snow showers: Heavy
+    95: '⛈️',   // Thunderstorm: Slight
+    96: '⛈️',   // Thunderstorm with hail: Slight
+    99: '⛈️'    // Thunderstorm with hail: Heavy
+};
+
+// Initialize on page load
+window.addEventListener('load', function() {
+    console.log('Initializing Climate Monitoring Dashboard...');
+    initializeMap();
+    getCurrentLocation();
+    setInterval(updateAllData, 300000); // Update every 5 minutes
+});
+
+// Improved API call function with better error handling
+async function makeAPICall(endpoint, options = {}) {
+    const { timeout = 10000, fallbackData = null } = options;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            signal: controller.signal,
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        console.warn(`API call failed for ${endpoint}:`, error.message);
+        
+        if (fallbackData) {
+            console.log(`Using fallback data for ${endpoint}`);
+            return fallbackData;
+        }
+        
+        throw error;
+    }
+}
+
+async function getCurrentLocation() {
+    const statusEl = document.getElementById('locationStatus');
+    const locationEl = document.getElementById('currentLocation');
+    
+    if (navigator.geolocation) {
+        statusEl.className = 'status-indicator status-warning';
+        locationEl.textContent = 'Getting location...';
+        
+        navigator.geolocation.getCurrentPosition(
+            async function(position) {
+                currentLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                statusEl.className = 'status-indicator status-online';
+                
+                try {
+                    // Get location name
+                    const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLocation.lat}&longitude=${currentLocation.lng}&localityLanguage=en`);
+                    const data = await response.json();
+                    const locationName = `${data.city || data.locality}, ${data.principalSubdivision || data.countryName}`;
+                    locationEl.textContent = locationName;
+                } catch (error) {
+                    locationEl.textContent = `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`;
+                }
+                
+                // Update map and weather data
+                if (map) {
+                    map.setView([currentLocation.lat, currentLocation.lng], 12);
+                    addLocationMarker();
+                }
+                
+                await updateAllData();
+            },
+            function(error) {
+                statusEl.className = 'status-indicator status-offline';
+                locationEl.innerHTML = `<span class="error">Location error: ${error.message}</span>`;
+                // Use default location (Delhi, India) for demo
+                currentLocation = { lat: 28.6139, lng: 77.2090 };
+                locationEl.textContent = "Delhi, India (Default)";
+                updateAllData();
+            }
+        );
+    } else {
+        statusEl.className = 'status-indicator status-offline';
+        locationEl.innerHTML = '<span class="error">Geolocation not supported</span>';
+        // Use default location
+        currentLocation = { lat: 28.6139, lng: 77.2090 };
+        locationEl.textContent = "Delhi, India (Default)";
+        updateAllData();
+    }
+}
+
+function initializeMap() {
+    map = L.map('map').setView([28.6139, 77.2090], 10);
+    
+    // OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add click handler for risk zones
+    map.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(4);
+        const lng = e.latlng.lng.toFixed(4);
+        L.popup()
+            .setLatLng(e.latlng)
+            .setContent(`
+                <strong>Weather Risk Assessment</strong><br>
+                Location: ${lat}, ${lng}<br>
+                <button onclick="analyzeLocation(${lat}, ${lng})" style="margin-top: 10px; padding: 5px 10px; background: #2196f3; color: white; border: none; border-radius: 5px;">
+                    Analyze This Location
+                </button>
+            `)
+            .openOn(map);
+    });
+}
+
+function addLocationMarker() {
+    if (currentLocation && map) {
+        L.marker([currentLocation.lat, currentLocation.lng])
+            .addTo(map)
+            .bindPopup('<strong>Current Location</strong><br>Weather monitoring active')
+            .openPopup();
+    }
+}
+
+async function updateAllData() {
+    if (!currentLocation) return;
+    
+    console.log('Updating weather data...');
+    await Promise.all([
+        updateCurrentWeather(),
+        updateForecast(),
+        updateAlerts(),
+        updateEnvironmentalData()
+    ]);
+}
+
+async function updateCurrentWeather() {
+    try {
+        const fallbackWeatherData = {
+            temperature: 25,
+            condition: "Partly cloudy",
+            weather_code: 2,
+            humidity: 65,
+            wind_speed: 12,
+            pressure: 1013,
+            uv_index: 5
+        };
+        
+        const data = await makeAPICall(
+            `/climate/current?lat=${currentLocation.lat}&lng=${currentLocation.lng}`,
+            { fallbackData: fallbackWeatherData }
+        );
+        
+        // Update current weather display
+        document.getElementById('currentTemp').textContent = `${data.temperature}°C`;
+        document.getElementById('currentCondition').textContent = data.condition;
+        document.getElementById('weatherIcon').textContent = weatherIcons[data.weather_code] || '🌤️';
+        
+        document.getElementById('humidity').textContent = `${data.humidity}%`;
+        document.getElementById('windSpeed').textContent = `${data.wind_speed} km/h`;
+        document.getElementById('pressure').textContent = `${data.pressure} hPa`;
+        document.getElementById('uvIndex').textContent = data.uv_index || '--';
+        
+        // Update crowd risk assessment
+        updateCrowdRiskAssessment(data);
+        
+    } catch (error) {
+        console.error('Failed to update current weather:', error);
+        document.getElementById('currentCondition').innerHTML = '<span class="error">Using offline data</span>';
+        
+        // Use default values
+        document.getElementById('currentTemp').textContent = '25°C';
+        document.getElementById('weatherIcon').textContent = '⛅';
+        document.getElementById('humidity').textContent = '65%';
+        document.getElementById('windSpeed').textContent = '12 km/h';
+        document.getElementById('pressure').textContent = '1013 hPa';
+        document.getElementById('uvIndex').textContent = '5';
+    }
+}
+
+async function updateForecast() {
+    try {
+        const fallbackForecast = {
+            forecast: Array.from({length: 8}, (_, i) => ({
+                time: String((new Date().getHours() + i + 1) % 24).padStart(2, '0') + ':00',
+                temperature: 25 + (i % 3),
+                condition: 'Partly cloudy',
+                weather_code: 2,
+                precipitation_probability: 20,
+                wind_speed: 10,
+                humidity: 65
+            }))
+        };
+        
+        const data = await makeAPICall(
+            `/climate/forecast?lat=${currentLocation.lat}&lng=${currentLocation.lng}`,
+            { fallbackData: fallbackForecast }
+        );
+        
+        const container = document.getElementById('forecastContainer');
+        container.innerHTML = '';
+        
+        data.forecast.slice(0, 8).forEach(item => {
+            const forecastItem = document.createElement('div');
+            forecastItem.className = 'forecast-item';
+            
+            const crowdImpact = calculateCrowdImpact(item);
+            
+            forecastItem.innerHTML = `
+                <div class="forecast-time">${item.time}</div>
+                <div class="forecast-icon">${weatherIcons[item.weather_code] || '🌤️'}</div>
+                <div class="forecast-temp">${item.temperature}°C</div>
+                <div class="forecast-desc">${item.condition}</div>
+                <div class="forecast-desc" style="color: ${getCrowdImpactColor(crowdImpact)}; font-weight: bold; margin-top: 5px;">
+                    ${crowdImpact} Impact
+                </div>
+            `;
+            
+            container.appendChild(forecastItem);
+        });
+        
+    } catch (error) {
+        console.error('Failed to update forecast:', error);
+        document.getElementById('forecastContainer').innerHTML = `
+            <div class="forecast-item">
+                <div class="forecast-time">Next Hours</div>
+                <div class="forecast-icon">🌤️</div>
+                <div class="forecast-temp">25°C</div>
+                <div class="forecast-desc">Partly cloudy</div>
+                <div class="forecast-desc" style="color: #4caf50; font-weight: bold; margin-top: 5px;">
+                    LOW Impact
+                </div>
+            </div>
+        `;
+    }
+}
+async function updateAlerts() {
+    try {
+        const fallbackAlerts = {
+            alerts: [{
+                severity: "info",
+                icon: "✅",
+                title: "Weather Monitoring Active",
+                message: "Climate monitoring system is online and tracking conditions",
+                crowd_impact: "LOW"
+            }]
+        };
+        
+        const data = await makeAPICall(
+            `/climate/alerts?lat=${currentLocation.lat}&lng=${currentLocation.lng}`,
+            { fallbackData: fallbackAlerts }
+        );
+        
+        const container = document.getElementById('alertsContainer');
+        container.innerHTML = '';
+        
+        if (data.alerts && data.alerts.length > 0) {
+            data.alerts.forEach(alert => {
+                const alertItem = document.createElement('div');
+                alertItem.className = `alert-item alert-${alert.severity}`;
+                alertItem.innerHTML = `
+                    <div class="alert-icon">${alert.icon}</div>
+                    <div>
+                        <strong>${alert.title}</strong><br>
+                        <span style="color: rgba(255,255,255,0.8);">${alert.message}</span>
+                        ${alert.crowd_impact ? `<br><small style="color: ${getCrowdImpactColor(alert.crowd_impact)};">Crowd Impact: ${alert.crowd_impact}</small>` : ''}
+                    </div>
+                `;
+                container.appendChild(alertItem);
+            });
+        }
+        
+    } catch (error) {
+        console.error('Failed to update alerts:', error);
+        document.getElementById('alertsContainer').innerHTML = `
+            <div class="alert-item alert-info">
+                <div class="alert-icon">📡</div>
+                <div>
+                    <strong>System Status</strong><br>
+                    <span style="color: rgba(255,255,255,0.8);">Weather monitoring active (offline mode)</span>
+                </div>
+            </div>
+        `;
+    }
+}
+async function updateEnvironmentalData() {
+    try {
+        const fallbackEnvironmental = {
+            air_quality: 'Good',
+            cloud_cover: 50,
+            precipitation: 0,
+            dew_point: 15
+        };
+        
+        const data = await makeAPICall(
+            `/climate/environmental?lat=${currentLocation.lat}&lng=${currentLocation.lng}`,
+            { fallbackData: fallbackEnvironmental }
+        );
+        
+        document.getElementById('airQuality').textContent = data.air_quality || 'Good';
+        document.getElementById('cloudCover').textContent = `${data.cloud_cover}%`;
+        document.getElementById('precipitation').textContent = `${data.precipitation} mm`;
+        document.getElementById('dewPoint').textContent = `${data.dew_point}°C`;
+        
+    } catch (error) {
+        console.error('Failed to update environmental data:', error);
+        document.getElementById('airQuality').textContent = 'Good';
+        document.getElementById('cloudCover').textContent = '50%';
+        document.getElementById('precipitation').textContent = '0 mm';
+        document.getElementById('dewPoint').textContent = '15°C';
+    }
+}
+
+function updateCrowdRiskAssessment(weatherData) {
+    const riskLevel = calculateOverallCrowdRisk(weatherData);
+    const indicator = document.getElementById('crowdRiskIndicator');
+    
+    indicator.textContent = `${riskLevel.level.toUpperCase()} RISK`;
+    indicator.className = `crowd-risk-indicator risk-${riskLevel.level.toLowerCase()}`;
+    
+    // Update individual metrics
+    document.getElementById('comfortIndex').textContent = riskLevel.comfort;
+    document.getElementById('heatStress').textContent = riskLevel.heat_stress;
+    document.getElementById('visibilityImpact').textContent = riskLevel.visibility;
+    document.getElementById('evacuation').textContent = riskLevel.evacuation;
+}
+
+function calculateOverallCrowdRisk(weather) {
+    let riskScore = 0;
+    
+    // Temperature risk
+    if (weather.temperature > 35) riskScore += 3;
+    else if (weather.temperature > 30) riskScore += 2;
+    else if (weather.temperature < 5) riskScore += 2;
+    
+    // Humidity risk
+    if (weather.humidity > 80) riskScore += 2;
+    else if (weather.humidity > 70) riskScore += 1;
+    
+    // Wind risk
+    if (weather.wind_speed > 50) riskScore += 3;
+    else if (weather.wind_speed > 30) riskScore += 2;
+    else if (weather.wind_speed > 20) riskScore += 1;
+    
+    // Precipitation risk
+    const precipProb = weather.precipitation_probability || 0;
+    if (precipProb > 80) riskScore += 2;
+    else if (precipProb > 60) riskScore += 1;
+    
+    let level;
+    if (riskScore >= 6) level = 'extreme';
+    else if (riskScore >= 4) level = 'high';
+    else if (riskScore >= 2) level = 'medium';
+    else level = 'low';
+    
+    return {
+        level: level,
+        comfort: calculateComfortIndex(weather.temperature, weather.humidity),
+        heat_stress: weather.temperature > 32 ? 'HIGH' : weather.temperature > 28 ? 'MED' : 'LOW',
+        visibility: weather.weather_code >= 45 && weather.weather_code <= 48 ? 'POOR' : 'GOOD',
+        evacuation: riskScore >= 4 ? 'HIGH' : riskScore >= 2 ? 'MED' : 'LOW'
+    };
+}
+
+function calculateComfortIndex(temp, humidity) {
+    const heatIndex = temp + (0.5555 * (6.11 * Math.exp(5417.7530 * ((1/273.16) - (1/(273.15 + temp)))) * (humidity/100) - 10));
+    
+    if (heatIndex < 27) return 'GOOD';
+    else if (heatIndex < 32) return 'FAIR';
+    else if (heatIndex < 41) return 'POOR';
+    else return 'DANGER';
+}
+
+function calculateCrowdImpact(forecastItem) {
+    let impactScore = 0;
+    
+    if (forecastItem.temperature > 35 || forecastItem.temperature < 5) impactScore += 2;
+    else if (forecastItem.temperature > 30 || forecastItem.temperature < 10) impactScore += 1;
+    
+    const precipProb = forecastItem.precipitation_probability || 0;
+    if (precipProb > 70) impactScore += 2;
+    else if (precipProb > 50) impactScore += 1;
+    
+    if (forecastItem.wind_speed > 25) impactScore += 1;
+    
+    if (impactScore >= 3) return 'HIGH';
+    else if (impactScore >= 2) return 'MED';
+    else return 'LOW';
+}
+
+function getCrowdImpactColor(impact) {
+    switch(impact) {
+        case 'HIGH': return '#f44336';
+        case 'MED': return '#ff9800';
+        case 'LOW': return '#4caf50';
+        default: return '#2196f3';
+    }
+}
+
+async function refreshLocation() {
+    document.getElementById('locationStatus').className = 'status-indicator status-warning';
+    document.getElementById('currentLocation').textContent = 'Refreshing...';
+    await getCurrentLocation();
+}
+
+async function analyzeLocation(lat, lng) {
+    try {
+        const response = await makeAPICall(`/climate/analyze?lat=${lat}&lng=${lng}`);
+        alert(`Weather Risk Analysis for ${lat}, ${lng}:\n\nRisk Level: ${response.risk_level}\nCrowd Impact: ${response.crowd_impact}\nRecommendation: ${response.recommendation}`);
+    } catch (error) {
+        alert('Unable to analyze location. Using default risk assessment.');
+    }
+}
+
+// Error handling
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+});
+
+// Network status monitoring
+window.addEventListener('online', function() {
+    console.log('Network connection restored');
+    updateAllData();
+});
+
+window.addEventListener('offline', function() {
+    console.log('Network connection lost - using cached data');
+});
+        async function getCurrentLocation() {
+            const statusEl = document.getElementById('locationStatus');
+            const locationEl = document.getElementById('currentLocation');
+            
+            if (navigator.geolocation) {
+                statusEl.className = 'status-indicator status-warning';
+                locationEl.textContent = 'Getting location...';
+                
+                navigator.geolocation.getCurrentPosition(
+                    async function(position) {
+                        currentLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        statusEl.className = 'status-indicator status-online';
+                        
+                        try {
+                            // Get location name
+                            const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLocation.lat}&longitude=${currentLocation.lng}&localityLanguage=en`);
+                            const data = await response.json();
+                            const locationName = `${data.city || data.locality}, ${data.principalSubdivision || data.countryName}`;
+                            locationEl.textContent = locationName;
+                        } catch (error) {
+                            locationEl.textContent = `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`;
+                        }
+                        
+                        // Update map and weather data
+                        if (map) {
+                            map.setView([currentLocation.lat, currentLocation.lng], 12);
+                            addLocationMarker();
+                        }
+                        
+                        await updateAllData();
+                    },
+                    function(error) {
+                        statusEl.className = 'status-indicator status-offline';
+                        locationEl.innerHTML = `<span class="error">Location error: ${error.message}</span>`;
+                        // Use default location (Delhi, India) for demo
+                        currentLocation = { lat: 28.6139, lng: 77.2090 };
+                        updateAllData();
+                    }
+                );
+            } else {
+                statusEl.className = 'status-indicator status-offline';
+                locationEl.innerHTML = '<span class="error">Geolocation not supported</span>';
+                // Use default location
+                currentLocation = { lat: 28.6139, lng: 77.2090 };
+                updateAllData();
+            }
+        }
+
+        function initializeMap() {
+            map = L.map('map').setView([28.6139, 77.2090], 10);
+            
+            // OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add click handler for risk zones
+            map.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(4);
+                const lng = e.latlng.lng.toFixed(4);
+                L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent(`
+                        <strong>Weather Risk Assessment</strong><br>
+                        Location: ${lat}, ${lng}<br>
+                        <button onclick="analyzeLocation(${lat}, ${lng})" style="margin-top: 10px; padding: 5px 10px; background: #2196f3; color: white; border: none; border-radius: 5px;">
+                            Analyze This Location
+                        </button>
+                    `)
+                    .openOn(map);
+            });
+        }
+
+        function addLocationMarker() {
+            if (currentLocation && map) {
+                L.marker([currentLocation.lat, currentLocation.lng])
+                    .addTo(map)
+                    .bindPopup('<strong>Current Location</strong><br>Weather monitoring active')
+                    .openPopup();
+            }
+        }
+
+        async function updateAllData() {
+            if (!currentLocation) return;
+            
+            console.log('Updating weather data...');
+            await Promise.all([
+                updateCurrentWeather(),
+                updateForecast(),
+                updateAlerts(),
+                updateEnvironmentalData()
+            ]);
+        }
+
+        async function updateCurrentWeather() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/climate/current?lat=${currentLocation.lat}&lng=${currentLocation.lng}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Update current weather display
+                document.getElementById('currentTemp').textContent = `${data.temperature}°C`;
+                document.getElementById('currentCondition').textContent = data.condition;
+                document.getElementById('weatherIcon').textContent = weatherIcons[data.weather_code] || '🌤️';
+                
+                document.getElementById('humidity').textContent = `${data.humidity}%`;
+                document.getElementById('windSpeed').textContent = `${data.wind_speed} km/h`;
+                document.getElementById('pressure').textContent = `${data.pressure} hPa`;
+                document.getElementById('uvIndex').textContent = data.uv_index || '--';
+                
+                // Update crowd risk assessment
+                updateCrowdRiskAssessment(data);
+                
+            } catch (error) {
+                console.error('Failed to update current weather:', error);
+                document.getElementById('currentCondition').innerHTML = '<span class="error">Error loading weather</span>';
+            }
+        }
+
+        async function updateForecast() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/climate/forecast?lat=${currentLocation.lat}&lng=${currentLocation.lng}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const container = document.getElementById('forecastContainer');
+                container.innerHTML = '';
+                
+                data.forecast.slice(0, 8).forEach(item => {
+                    const forecastItem = document.createElement('div');
+                    forecastItem.className = 'forecast-item';
+                    
+                    const crowdImpact = calculateCrowdImpact(item);
+                    
+                    forecastItem.innerHTML = `
+                        <div class="forecast-time">${item.time}</div>
+                        <div class="forecast-icon">${weatherIcons[item.weather_code] || '🌤️'}</div>
+                        <div class="forecast-temp">${item.temperature}°C</div>
+                        <div class="forecast-desc">${item.condition}</div>
+                        <div class="forecast-desc" style="color: ${getCrowdImpactColor(crowdImpact)}; font-weight: bold; margin-top: 5px;">
+                            ${crowdImpact} Impact
+                        </div>
+                    `;
+                    
+                    container.appendChild(forecastItem);
+                });
+                
+            } catch (error) {
+                console.error('Failed to update forecast:', error);
+                document.getElementById('forecastContainer').innerHTML = '<span class="error">Error loading forecast</span>';
+            }
+        }
+
+        async function updateAlerts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/climate/alerts?lat=${currentLocation.lat}&lng=${currentLocation.lng}`);
+                const data = await response.json();
+                
+                const container = document.getElementById('alertsContainer');
+                container.innerHTML = '';
+                
+                if (data.alerts && data.alerts.length > 0) {
+                    data.alerts.forEach(alert => {
+                        const alertItem = document.createElement('div');
+                        alertItem.className = `alert-item alert-${alert.severity}`;
+                        alertItem.innerHTML = `
+                            <div class="alert-icon">${alert.icon}</div>
+                            <div>
+                                <strong>${alert.title}</strong><br>
+                                <span style="color: rgba(255,255,255,0.8);">${alert.message}</span>
+                                ${alert.crowd_impact ? `<br><small style="color: ${getCrowdImpactColor(alert.crowd_impact)};">Crowd Impact: ${alert.crowd_impact}</small>` : ''}
+                            </div>
+                        `;
+                        container.appendChild(alertItem);
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="alert-item alert-info">
+                            <div class="alert-icon">✅</div>
+                            <div>
+                                <strong>All Clear</strong><br>
+                                <span style="color: rgba(255,255,255,0.8);">No weather alerts affecting crowd management</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Failed to update alerts:', error);
+                document.getElementById('alertsContainer').innerHTML = '<span class="error">Error loading alerts</span>';
+            }
+        }
+
+        async function updateEnvironmentalData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/climate/environmental?lat=${currentLocation.lat}&lng=${currentLocation.lng}`);
+                const data = await response.json();
+                
+                document.getElementById('airQuality').textContent = data.air_quality || 'Good';
+                document.getElementById('cloudCover').textContent = `${data.cloud_cover}%`;
+                document.getElementById('precipitation').textContent = `${data.precipitation} mm`;
+                document.getElementById('dewPoint').textContent = `${data.dew_point}°C`;
+                
+            } catch (error) {
+                console.error('Failed to update environmental data:', error);
+            }
+        }
+
+        function updateCrowdRiskAssessment(weatherData) {
+            const riskLevel = calculateOverallCrowdRisk(weatherData);
+            const indicator = document.getElementById('crowdRiskIndicator');
+            
+            indicator.textContent = `${riskLevel.level.toUpperCase()} RISK`;
+            indicator.className = `crowd-risk-indicator risk-${riskLevel.level.toLowerCase()}`;
+            
+            // Update individual metrics
+            document.getElementById('comfortIndex').textContent = riskLevel.comfort;
+            document.getElementById('heatStress').textContent = riskLevel.heat_stress;
+            document.getElementById('visibilityImpact').textContent = riskLevel.visibility;
+            document.getElementById('evacuation').textContent = riskLevel.evacuation;
+        }
+
+        function calculateOverallCrowdRisk(weather) {
+            let riskScore = 0;
+            
+            // Temperature risk
+            if (weather.temperature > 35) riskScore += 3;
+            else if (weather.temperature > 30) riskScore += 2;
+            else if (weather.temperature < 5) riskScore += 2;
+            
+            // Humidity risk
+            if (weather.humidity > 80) riskScore += 2;
+            else if (weather.humidity > 70) riskScore += 1;
+            
+            // Wind risk
+            if (weather.wind_speed > 50) riskScore += 3;
+            else if (weather.wind_speed > 30) riskScore += 2;
+            else if (weather.wind_speed > 20) riskScore += 1;
+            
+            // Precipitation risk
+            if (weather.precipitation_probability > 80) riskScore += 2;
+            else if (weather.precipitation_probability > 60) riskScore += 1;
+            
+            let level;
+            if (riskScore >= 6) level = 'extreme';
+            else if (riskScore >= 4) level = 'high';
+            else if (riskScore >= 2) level = 'medium';
+            else level = 'low';
+            
+            return {
+                level: level,
+                comfort: calculateComfortIndex(weather.temperature, weather.humidity),
+                heat_stress: weather.temperature > 32 ? 'HIGH' : weather.temperature > 28 ? 'MED' : 'LOW',
+                visibility: weather.weather_code >= 45 && weather.weather_code <= 48 ? 'POOR' : 'GOOD',
+                evacuation: riskScore >= 4 ? 'HIGH' : riskScore >= 2 ? 'MED' : 'LOW'
+            };
+        }
+
+        function calculateComfortIndex(temp, humidity) {
+            const heatIndex = temp + (0.5555 * (6.11 * Math.exp(5417.7530 * ((1/273.16) - (1/(273.15 + temp)))) * (humidity/100) - 10));
+            
+            if (heatIndex < 27) return 'GOOD';
+            else if (heatIndex < 32) return 'FAIR';
+            else if (heatIndex < 41) return 'POOR';
+            else return 'DANGER';
+        }
+
+        function calculateCrowdImpact(forecastItem) {
+            let impactScore = 0;
+            
+            if (forecastItem.temperature > 35 || forecastItem.temperature < 5) impactScore += 2;
+            else if (forecastItem.temperature > 30 || forecastItem.temperature < 10) impactScore += 1;
+            
+            if (forecastItem.precipitation_probability > 70) impactScore += 2;
+            else if (forecastItem.precipitation_probability > 50) impactScore += 1;
+            
+            if (forecastItem.wind_speed > 25) impactScore += 1;
+            
+            if (impactScore >= 3) return 'HIGH';
+            else if (impactScore >= 2) return 'MED';
+            else return 'LOW';
+        }
+
+        function getCrowdImpactColor(impact) {
+            switch(impact) {
+                case 'HIGH': return '#f44336';
+                case 'MED': return '#ff9800';
+                case 'LOW': return '#4caf50';
+                default: return '#2196f3';
+            }
+        }
+
+        async function refreshLocation() {
+            document.getElementById('locationStatus').className = 'status-indicator status-warning';
+            document.getElementById('currentLocation').textContent = 'Refreshing...';
+            await getCurrentLocation();
+        }
+
+        async function analyzeLocation(lat, lng) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/climate/analyze?lat=${lat}&lng=${lng}`);
+                const data = await response.json();
+                
+                alert(`Weather Risk Analysis for ${lat}, ${lng}:\n\nRisk Level: ${data.risk_level}\nCrowd Impact: ${data.crowd_impact}\nRecommendation: ${data.recommendation}`);
+            } catch (error) {
+                alert('Unable to analyze location. Please try again.');
+            }
+        }
+
+        // Error handling
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+        });
+    </script>
+</body>
+</html>
