@@ -1,0 +1,567 @@
+crowddetection.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Crowd Detection System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ff9933 0%, #ffffff 50%, #138808 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b35, #ff9f43);
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(255, 107, 53, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.95);
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(45deg, #ff6b35, #ff9f43);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 14px;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .control-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 107, 53, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .control-button {
+            background: linear-gradient(45deg, #ff6b35, #ff9f43);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+        
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+        
+        .control-button.secondary {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+        
+        .control-button.secondary:hover {
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .status-success {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            color: #2e7d32;
+        }
+        
+        .status-error {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        
+        .status-info {
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid #2196F3;
+            color: #1565c0;
+        }
+        
+        .loading-container {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b35;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .streamlit-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .streamlit-frame {
+            width: 100%;
+            height: 800px;
+            border: none;
+            border-radius: 15px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 4px solid #ff6b35;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #ff6b35;
+        }
+        
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        
+        .feature-description {
+            font-size: 0.9rem;
+            color: #718096;
+            line-height: 1.4;
+        }
+        
+        .system-status {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+        
+        .offline {
+            background: #f44336;
+        }
+        
+        .offline-item {
+            background: rgba(244, 67, 54, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="goBackToDashboard()">
+        ← Back to Dashboard
+    </button>
+    
+    <header class="header">
+        <h1>🔍 AI Crowd Detection System</h1>
+        <p>Real-time crowd monitoring with YOLOv8 AI detection</p>
+    </header>
+    
+    <div class="container">
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h3 style="margin-bottom: 20px; color: #2d3748;">🚀 Launch Detection System</h3>
+            <div class="controls-grid">
+                <button class="control-button" onclick="launchStreamlitApp()">
+                    🎥 Start AI Detection
+                </button>
+                <button class="control-button secondary" onclick="checkSystemStatus()">
+                    📊 System Status
+                </button>
+                <button class="control-button" onclick="stopDetection()" style="background: linear-gradient(45deg, #e55039, #ff6348);">
+                    ⏹️ Stop Detection
+                </button>
+                <button class="control-button secondary" onclick="showSystemInfo()">
+                    ℹ️ System Info
+                </button>
+            </div>
+            
+            <!-- Status Messages -->
+            <div id="statusMessage" class="status-message"></div>
+            
+            <!-- Loading -->
+            <div id="loadingContainer" class="loading-container">
+                <div class="loading-spinner"></div>
+                <h3 style="color: #333; margin-bottom: 10px;">Starting AI Detection System</h3>
+                <p style="color: #666;">Initializing YOLOv8 model and camera access...</p>
+            </div>
+        </div>
+        
+        <!-- System Status -->
+        <div class="system-status" id="systemStatus" style="display: none;">
+            <h3 style="color: #2d3748; margin-bottom: 15px;">🖥️ System Status</h3>
+            <div class="status-grid">
+                <div class="status-item" id="modelStatus">
+                    <div class="status-indicator"></div>
+                    <span>YOLOv8 Model: Ready</span>
+                </div>
+                <div class="status-item" id="cameraStatus">
+                    <div class="status-indicator"></div>
+                    <span>Camera Access: Available</span>
+                </div>
+                <div class="status-item" id="alertStatus">
+                    <div class="status-indicator"></div>
+                    <span>Emergency Alerts: Active</span>
+                </div>
+                <div class="status-item" id="streamlitStatus">
+                    <div class="status-indicator offline" id="streamlitIndicator"></div>
+                    <span>Streamlit Server: <span id="streamlitText">Offline</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Features Overview -->
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <div class="feature-title">Real-time People Detection</div>
+                <div class="feature-description">Accurate person detection and counting using YOLOv8 AI model</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏃</div>
+                <div class="feature-title">Movement Analysis</div>
+                <div class="feature-description">Detect running patterns and unusual movement behaviors</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🚨</div>
+                <div class="feature-title">Emergency Detection</div>
+                <div class="feature-description">Automatic alerts for crowd emergencies and overcrowding</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Crowd Density Analysis</div>
+                <div class="feature-description">Monitor density levels: LOW, MEDIUM, HIGH, CRITICAL</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔊</div>
+                <div class="feature-title">Audio Alerts</div>
+                <div class="feature-description">Sound notifications for emergency situations</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📹</div>
+                <div class="feature-title">Multi-source Support</div>
+                <div class="feature-description">Works with webcam feeds and uploaded video files</div>
+            </div>
+        </div>
+        
+        <!-- Streamlit App Container -->
+        <div class="streamlit-container" id="streamlitContainer">
+            <h3 style="color: #2d3748; margin-bottom: 15px;">🎯 Live Detection Feed</h3>
+            <iframe id="streamlitFrame" class="streamlit-frame" src=""></iframe>
+        </div>
+    </div>
+    
+    <script>
+        let streamlitRunning = false;
+        
+        function goBackToDashboard() {
+            window.location.href = 'analyticsdashboard.html';
+        }
+        
+        function launchStreamlitApp() {
+            if (streamlitRunning) {
+                showMessage('Detection system is already running!', 'info');
+                document.getElementById('streamlitContainer').style.display = 'block';
+                return;
+            }
+            
+            showLoading();
+            showMessage('Starting AI Detection System...', 'info');
+            
+            // Start Streamlit server
+            fetch('/start_streamlit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Wait for server to start
+                    setTimeout(() => {
+                        loadStreamlitApp();
+                    }, 4000);
+                } else {
+                    throw new Error(data.message || 'Failed to start server');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showMessage('Failed to start detection system: ' + error.message, 'error');
+                console.error('Error:', error);
+            });
+        }
+        
+        function loadStreamlitApp() {
+            const iframe = document.getElementById('streamlitFrame');
+            const container = document.getElementById('streamlitContainer');
+            
+            iframe.src = 'http://localhost:8501';
+            
+            iframe.onload = function() {
+                hideLoading();
+                container.style.display = 'block';
+                streamlitRunning = true;
+                updateStreamlitStatus(true);
+                showMessage('🎯 AI Detection System launched successfully! Real-time monitoring active.', 'success');
+                
+                // Scroll to the detection feed
+                container.scrollIntoView({ behavior: 'smooth' });
+            };
+            
+            iframe.onerror = function() {
+                hideLoading();
+                container.style.display = 'none';
+                showMessage('Could not connect to detection system. Please try again.', 'error');
+            };
+            
+            // Timeout fallback
+            setTimeout(() => {
+                if (!streamlitRunning) {
+                    hideLoading();
+                    // Try to show anyway
+                    container.style.display = 'block';
+                    streamlitRunning = true;
+                    updateStreamlitStatus(true);
+                    showMessage('Detection system should be running. If you see a blank frame, please refresh the page.', 'info');
+                }
+            }, 8000);
+        }
+        
+        function stopDetection() {
+            if (!streamlitRunning) {
+                showMessage('Detection system is not running.', 'info');
+                return;
+            }
+            
+            document.getElementById('streamlitContainer').style.display = 'none';
+            document.getElementById('streamlitFrame').src = '';
+            streamlitRunning = false;
+            updateStreamlitStatus(false);
+            
+            showMessage('🛑 Detection system stopped.', 'info');
+        }
+        
+        function checkSystemStatus() {
+            const statusDiv = document.getElementById('systemStatus');
+            statusDiv.style.display = statusDiv.style.display === 'none' ? 'block' : 'none';
+            
+            // Check Streamlit status
+            if (streamlitRunning) {
+                fetch('http://localhost:8501')
+                    .then(() => {
+                        updateStreamlitStatus(true);
+                    })
+                    .catch(() => {
+                        updateStreamlitStatus(false);
+                        streamlitRunning = false;
+                    });
+            }
+        }
+        
+        function updateStreamlitStatus(isOnline) {
+            const indicator = document.getElementById('streamlitIndicator');
+            const text = document.getElementById('streamlitText');
+            const statusItem = document.getElementById('streamlitStatus');
+            
+            if (isOnline) {
+                indicator.classList.remove('offline');
+                text.textContent = 'Online';
+                statusItem.classList.remove('offline-item');
+                statusItem.classList.add('status-item');
+            } else {
+                indicator.classList.add('offline');
+                text.textContent = 'Offline';
+                statusItem.classList.add('offline-item');
+                statusItem.classList.remove('status-item');
+            }
+        }
+        
+        function showSystemInfo() {
+            const info = `🔧 AI CROWD DETECTION SYSTEM
+
+📋 System Configuration:
+• AI Model: YOLOv8 (Nano version for speed)
+• Detection Classes: Person detection (Class 0)
+• Processing: Real-time video analysis
+• Frame Rate: ~30 FPS
+• Resolution: 640x480 (optimized)
+
+🎯 Detection Parameters:
+• Density Threshold: Configurable (2.0-8.0)
+• Speed Threshold: 80+ units/second for running
+• Alert Cooldown: 3 seconds between alerts
+• Min Person Height: 15% of frame height
+• Emergency Triggers: Running detection + overcrowding
+
+⚙️ Emergency Features:
+• Sound Alerts: Dual-beep emergency sound
+• Visual Indicators: Red borders, emergency text
+• Real-time Tracking: Movement pattern analysis
+• Crowd Behavior: Clustering detection
+• Multi-source: Webcam + video file support
+
+🚨 Alert Levels:
+• LOW: 1-3 close people
+• MEDIUM: 4-8 close people
+• HIGH: 9-20 close people  
+• CRITICAL: 20+ close people
+
+💡 Requirements:
+• Python 3.7+
+• Streamlit, OpenCV, Ultralytics
+• Pygame (for audio alerts)
+• YOLOv8 model file (yolov8n.pt)`;
+            
+            alert(info);
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingContainer').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingContainer').style.display = 'none';
+        }
+        
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('statusMessage');
+            messageDiv.className = `status-message status-${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds for success/info messages
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if Streamlit is already running
+            fetch('http://localhost:8501')
+                .then(() => {
+                    streamlitRunning = true;
+                    updateStreamlitStatus(true);
+                    showMessage('Detection system is already running and ready!', 'success');
+                })
+                .catch(() => {
+                    updateStreamlitStatus(false);
+                });
+        });
+    </script>
+</body>
+</html>
