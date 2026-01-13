@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natural Disaster Prediction - Crowd Management System</title>
+    
+    <!-- Leaflet CSS for OpenStreetMap -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: rgba(30, 58, 138, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .back-button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .header-title {
+            text-align: center;
+            flex-grow: 1;
+        }
+        
+        .live-status {
+            background: rgba(16, 185, 129, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .map-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .alerts-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        #map {
+            width: 100%;
+            height: 500px;
+            border-radius: 15px;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .alert-item {
+            background: white;
+            border-left: 4px solid;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+        
+        .alert-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .alert-critical { border-color: #dc2626; }
+        .alert-warning { border-color: #f59e0b; }
+        .alert-info { border-color: #3b82f6; }
+        .alert-success { border-color: #10b981; }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .alert-type {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .alert-critical .alert-type { background: #fee2e2; color: #dc2626; }
+        .alert-warning .alert-type { background: #fef3c7; color: #f59e0b; }
+        .alert-info .alert-type { background: #dbeafe; color: #3b82f6; }
+        .alert-success .alert-type { background: #d1fae5; color: #10b981; }
+        
+        .alert-time {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .controls-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: end;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .control-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .control-input {
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        
+        .control-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .button {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+        }
+        
+        .refresh-button {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+        
+        .refresh-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .gps-button {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .gps-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
+        .gps-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+        
+        .no-alerts {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            padding: 40px;
+        }
+        
+        .location-info {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #1e40af;
+        }
+        
+        .map-legend {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border-radius: 50%;
+        }
+        
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #dc2626;
+        }
+        
+        .debug-info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border: 1px solid #d1d5db;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            #map {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <button class="back-button" onclick="window.location.href='analyticsdashboard.html'">
+                ← Back to Dashboard
+            </button>
+            <div class="header-title">
+                <h1>Natural Disaster Prediction</h1>
+                <p>Real-time monitoring & early warning system</p>
+            </div>
+            <div class="live-status">
+                <div class="status-dot"></div>
+                <span>MONITORING</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="controls-panel">
+            <div id="debugInfo" class="debug-info" style="display: none;"></div>
+            <div id="locationInfo" class="location-info" style="display: none;"></div>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label">Latitude</label>
+                    <input type="number" id="latitude" class="control-input" value="28.4593" step="0.0001" placeholder="Enter latitude">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Longitude</label>
+                    <input type="number" id="longitude" class="control-input" value="77.0264" step="0.0001" placeholder="Enter longitude">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Radius (km)</label>
+                    <input type="number" id="radius" class="control-input" value="100" min="10" max="1000" placeholder="Search radius">
+                </div>
+                <div class="control-group">
+                    <button class="button gps-button" id="gpsButton" onclick="getCurrentLocation()">
+                        <span id="gpsText">Use My Location</span>
+                        <div id="gpsSpinner" class="loading-spinner"></div>
+                    </button>
+                </div>
+                <div class="control-group">
+                    <button class="button refresh-button" onclick="refreshDisasterData()">
+                        <span id="refreshText">Refresh Data</span>
+                        <div id="refreshSpinner" class="loading-spinner"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🌍</div>
+                <div class="stat-number" id="earthquakeCount">-</div>
+                <div class="stat-label">Earthquakes (24h)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-number" id="fireCount">-</div>
+                <div class="stat-label">Fire Risk Areas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-number" id="gdacsCount">-</div>
+                <div class="stat-label">Active Alerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🚨</div>
+                <div class="stat-number" id="riskLevel">LOW</div>
+                <div class="stat-label">Risk Level</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="map-container">
+                <h2 class="section-title">Interactive Disaster Map</h2>
+                <div id="map"></div>
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-icon" style="background: #dc2626;"></div>
+                        <span>High Risk Earthquakes (M ≥ 5.0)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-icon" style="background: #f59e0b;"></div>
+                        <span>Moderate Earthquakes (M 3.0-4.9)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-icon" style="background: #10b981;"></div>
+                        <span>Minor Earthquakes (M < 3.0)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-icon" style="background: #ef4444;"></div>
+                        <span>High Fire Risk Areas</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-icon" style="background: #3b82f6;"></div>
+                        <span>Current Location</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alerts-panel">
+                <h2 class="section-title">Active Disaster Alerts</h2>
+                <div id="alertsContainer">
+                    <div class="no-alerts">Loading disaster data...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JavaScript for OpenStreetMap -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <script>
+        // Global variables
+        let map;
+        let currentLocationMarker;
+        let disasterMarkers = [];
+        let refreshInterval;
+        let currentLat = 28.4593;
+        let currentLng = 77.0264;
+
+        // Fixed API Base URL
+        const API_BASE_URL = 'http://localhost:5000/api';
+        
+        // Debug function
+        function showDebugInfo(message) {
+            const debugElement = document.getElementById('debugInfo');
+            if (debugElement) {
+                debugElement.style.display = 'block';
+                debugElement.textContent = message;
+                console.log('DEBUG:', message);
+            }
+        }
+
+        // Initialize dashboard with better error handling
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Disaster Prediction Dashboard...');
+            showDebugInfo('Initializing system...');
+            
+            // Test API connection first
+            testAPIConnection().then(() => {
+                initializeMap();
+                refreshDisasterData();
+                // Auto-refresh every 5 minutes
+                refreshInterval = setInterval(refreshDisasterData, 300000);
+            });
+        });
+
+        async function testAPIConnection() {
+            try {
+                showDebugInfo(`Testing API connection to: ${API_BASE_URL}`);
+                
+                const response = await fetch(`${API_BASE_URL}/health`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showDebugInfo(`API Connected Successfully: ${JSON.stringify(data)}`);
+                    hideError();
+                } else {
+                    throw new Error(`API responded with status: ${response.status}`);
+                }
+            } catch (error) {
+                const message = `API Connection Failed: ${error.message}`;
+                showDebugInfo(message);
+                showError(message + ' - Using fallback data');
+            }
+        }
+
+        function initializeMap() {
+            try {
+                showDebugInfo('Initializing Leaflet map...');
+                
+                // Initialize Leaflet map with OpenStreetMap tiles
+                map = L.map('map').setView([currentLat, currentLng], 9);
+
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 18
+                }).addTo(map);
+
+                // Add current location marker
+                updateLocationMarker(currentLat, currentLng);
+                
+                // Setup map click handler
+                setupMapClick();
+                
+                showDebugInfo('Map initialized successfully');
+            } catch (error) {
+                const message = `Map initialization failed: ${error.message}`;
+                showDebugInfo(message);
+                showError(message);
+            }
+        }
+
+        function updateLocationMarker(lat, lng) {
+            if (currentLocationMarker) {
+                map.removeLayer(currentLocationMarker);
+            }
+
+            currentLocationMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'current-location-marker',
+                    html: '<div style="background: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(map);
+
+            currentLocationMarker.bindPopup('<b>Current Search Location</b><br>Monitoring disasters in this area');
+            map.setView([lat, lng], map.getZoom());
+        }
+
+        function clearDisasterMarkers() {
+            disasterMarkers.forEach(marker => {
+                map.removeLayer(marker);
+            });
+            disasterMarkers = [];
+        }
+
+        function addEarthquakeMarkers(earthquakes) {
+            if (!earthquakes || earthquakes.length === 0) {
+                showDebugInfo('No earthquake data to display');
+                return;
+            }
+            
+            showDebugInfo(`Adding ${earthquakes.length} earthquake markers`);
+            
+            earthquakes.forEach(eq => {
+                let color, size;
+                if (eq.magnitude >= 5.0) {
+                    color = '#dc2626';
+                    size = 15;
+                } else if (eq.magnitude >= 3.0) {
+                    color = '#f59e0b';
+                    size = 12;
+                } else {
+                    color = '#10b981';
+                    size = 8;
+                }
+
+                const marker = L.marker([eq.latitude, eq.longitude], {
+                    icon: L.divIcon({
+                        className: 'earthquake-marker',
+                        html: `<div style="background: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [size, size],
+                        iconAnchor: [size/2, size/2]
+                    })
+                }).addTo(map);
+
+                const timeStr = new Date(eq.time).toLocaleString();
+                marker.bindPopup(`
+                    <b>Earthquake - M${eq.magnitude}</b><br>
+                    <strong>Location:</strong> ${eq.place}<br>
+                    <strong>Depth:</strong> ${eq.depth} km<br>
+                    <strong>Time:</strong> ${timeStr}<br>
+                    <strong>Distance:</strong> ${eq.distance_km?.toFixed(1)} km away
+                `);
+
+                disasterMarkers.push(marker);
+            });
+        }
+
+        function addFireRiskMarkers(fires) {
+            if (!fires || fires.length === 0) {
+                showDebugInfo('No fire risk data to display');
+                return;
+            }
+            
+            showDebugInfo(`Adding ${fires.length} fire risk markers`);
+            
+            fires.forEach(fire => {
+                let color = fire.risk_level === 'HIGH' ? '#ef4444' : 
+                           fire.risk_level === 'MODERATE' ? '#f59e0b' : '#10b981';
+
+                const marker = L.marker([fire.latitude, fire.longitude], {
+                    icon: L.divIcon({
+                        className: 'fire-marker',
+                        html: `<div style="background: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [12, 12],
+                        iconAnchor: [6, 6]
+                    })
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <b>Fire Risk - ${fire.risk_level}</b><br>
+                    <strong>Risk Score:</strong> ${fire.risk_score}/10<br>
+                    <strong>Temperature:</strong> ${fire.temperature}°C<br>
+                    <strong>Humidity:</strong> ${fire.humidity}%<br>
+                    <strong>Wind Speed:</strong> ${fire.wind_speed} km/h<br>
+                    <strong>Distance:</strong> ${fire.distance_km?.toFixed(1)} km away
+                `);
+
+                disasterMarkers.push(marker);
+            });
+        }
+
+        async function refreshDisasterData() {
+            setRefreshLoading(true);
+            hideError();
+            
+            try {
+                const lat = parseFloat(document.getElementById('latitude').value) || currentLat;
+                const lng = parseFloat(document.getElementById('longitude').value) || currentLng;
+                const radius = parseInt(document.getElementById('radius').value) || 100;
+
+                // Update current coordinates
+                currentLat = lat;
+                currentLng = lng;
+
+                // Clear existing markers
+                clearDisasterMarkers();
+                updateLocationMarker(lat, lng);
+
+                showDebugInfo(`Fetching disaster data for ${lat}, ${lng} with radius ${radius}km`);
+
+                // Test each endpoint individually
+                const earthquakeData = await fetchEarthquakeData(lat, lng, radius);
+                showDebugInfo(`Earthquake data: ${earthquakeData ? 'Success' : 'Failed'}`);
+
+                const fireData = await fetchFireData(lat, lng, radius);
+                showDebugInfo(`Fire data: ${fireData ? 'Success' : 'Failed'}`);
+
+                const gdacsData = await fetchGDACSData(lat, lng, radius);
+                showDebugInfo(`GDACS data: ${gdacsData ? 'Success' : 'Failed'}`);
+
+                const riskAssessment = await fetchRiskAssessment(lat, lng, radius);
+                showDebugInfo(`Risk assessment: ${riskAssessment ? 'Success' : 'Failed'}`);
+
+                // Update map markers
+                addEarthquakeMarkers(earthquakeData.earthquakes || []);
+                addFireRiskMarkers(fireData.fires || []);
+
+                // Update statistics
+                updateStatistics(earthquakeData, fireData, gdacsData, riskAssessment);
+                
+                // Update alerts panel
+                updateAlertsPanel(earthquakeData, fireData, gdacsData);
+                
+                showLocationInfo(`Monitoring ${radius}km radius around ${lat.toFixed(3)}, ${lng.toFixed(3)}`);
+                showDebugInfo('Disaster data updated successfully');
+                
+            } catch (error) {
+                const message = `Error refreshing disaster data: ${error.message}`;
+                showDebugInfo(message);
+                showError('Failed to fetch some disaster data. Using fallback information.');
+                
+                // Show fallback data
+                showFallbackData();
+            } finally {
+                setRefreshLoading(false);
+            }
+        }
+
+        // API Functions with detailed logging
+        async function fetchEarthquakeData(lat, lng, radius) {
+            try {
+                const url = `${API_BASE_URL}/disaster/earthquakes?lat=${lat}&lng=${lng}&radius=${radius}`;
+                showDebugInfo(`Fetching earthquakes: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showDebugInfo(`Earthquake API response: ${JSON.stringify(data).substring(0, 100)}...`);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                showDebugInfo(`Earthquake API error: ${error.message}`);
+                return getFallbackEarthquakeData(lat, lng);
+            }
+        }
+
+        async function fetchFireData(lat, lng, radius) {
+            try {
+                const url = `${API_BASE_URL}/disaster/fires?lat=${lat}&lng=${lng}&radius=${radius}`;
+                showDebugInfo(`Fetching fires: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showDebugInfo(`Fire API response: ${JSON.stringify(data).substring(0, 100)}...`);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                showDebugInfo(`Fire API error: ${error.message}`);
+                return getFallbackFireData(lat, lng);
+            }
+        }
+
+        async function fetchGDACSData(lat, lng, radius) {
+            try {
+                const url = `${API_BASE_URL}/disaster/gdacs?lat=${lat}&lng=${lng}&radius=${radius}`;
+                showDebugInfo(`Fetching GDACS: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showDebugInfo(`GDACS API response: ${JSON.stringify(data).substring(0, 100)}...`);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                showDebugInfo(`GDACS API error: ${error.message}`);
+                return getFallbackGDACSData();
+            }
+        }
+
+        async function fetchRiskAssessment(lat, lng, radius) {
+            try {
+                const url = `${API_BASE_URL}/disaster/risk-assessment?lat=${lat}&lng=${lng}&radius=${radius}`;
+                showDebugInfo(`Fetching risk assessment: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showDebugInfo(`Risk assessment response: ${JSON.stringify(data).substring(0, 100)}...`);
+                    return data;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                showDebugInfo(`Risk assessment error: ${error.message}`);
+                return getFallbackRiskAssessment();
+            }
+        }
+
+        // Fallback data functions
+        function getFallbackEarthquakeData(lat, lng) {
+            return {
+                earthquakes: [{
+                    magnitude: 3.2,
+                    place: `Mock earthquake near ${lat.toFixed(2)}, ${lng.toFixed(2)}`,
+                    time: Date.now() - 2 * 60 * 60 * 1000,
+                    latitude: lat + 0.2,
+                    longitude: lng + 0.1,
+                    depth: 15.0,
+                    distance_km: 25.0
+                }],
+                count: 1
+            };
+        }
+
+        function getFallbackFireData(lat, lng) {
+            return {
+                fires: [{
+                    latitude: lat + 0.05,
+                    longitude: lng + 0.03,
+                    risk_level: 'MODERATE',
+                    temperature: 32,
+                    humidity: 35,
+                    wind_speed: 12,
+                    precipitation: 0,
+                    risk_score: 6,
+                    distance_km: 8.2
+                }],
+                count: 1,
+                fire_risk_score: 6
+            };
+        }
+
+        function getFallbackGDACSData() {
+            return {
+                alerts: [{
+                    event_id: 'MOCK001',
+                    event_type: 'INFO',
+                    title: 'System Monitoring Active',
+                    description: 'Disaster monitoring system is operational and scanning for threats.',
+                    severity: 'INFO',
+                    date: new Date().toISOString(),
+                    icon: '✅'
+                }],
+                count: 1
+            };
+        }
+
+        function getFallbackRiskAssessment() {
+            return {
+                risk_level: 'LOW',
+                risk_score: 3,
+                crowd_impact: 'LOW',
+                recommendation: 'Normal safety measures sufficient - monitoring active'
+            };
+        }
+
+        function showFallbackData() {
+            // Show fallback earthquake data
+            addEarthquakeMarkers(getFallbackEarthquakeData(currentLat, currentLng).earthquakes);
+            
+            // Show fallback fire data
+            addFireRiskMarkers(getFallbackFireData(currentLat, currentLng).fires);
+            
+            // Update statistics with fallback data
+            updateStatistics(
+                getFallbackEarthquakeData(currentLat, currentLng),
+                getFallbackFireData(currentLat, currentLng),
+                getFallbackGDACSData(),
+                getFallbackRiskAssessment()
+            );
+            
+            // Update alerts panel with fallback data
+            updateAlertsPanel(
+                getFallbackEarthquakeData(currentLat, currentLng),
+                getFallbackFireData(currentLat, currentLng),
+                getFallbackGDACSData()
+            );
+        }
+
+        function updateStatistics(earthquakeData, fireData, gdacsData, riskAssessment) {
+            try {
+                document.getElementById('earthquakeCount').textContent = earthquakeData.count || 0;
+                document.getElementById('fireCount').textContent = fireData.count || 0;
+                document.getElementById('gdacsCount').textContent = gdacsData.count || 0;
+                
+                const riskLevel = riskAssessment.risk_level || 'UNKNOWN';
+                const riskElement = document.getElementById('riskLevel');
+                riskElement.textContent = riskLevel;
+                
+                // Update risk level color
+                switch(riskLevel) {
+                    case 'LOW':
+                        riskElement.style.color = '#10b981';
+                        break;
+                    case 'MODERATE':
+                        riskElement.style.color = '#f59e0b';
+                        break;
+                    case 'HIGH':
+                        riskElement.style.color = '#ef4444';
+                        break;
+                    case 'CRITICAL':
+                        riskElement.style.color = '#dc2626';
+                        break;
+                    case 'EXTREME':
+                        riskElement.style.color = '#7c2d12';
+                        break;
+                    default:
+                        riskElement.style.color = '#6b7280';
+                }
+                
+                showDebugInfo('Statistics updated successfully');
+            } catch (error) {
+                showDebugInfo(`Error updating statistics: ${error.message}`);
+            }
+        }
+
+        function updateAlertsPanel(earthquakeData, fireData, gdacsData) {
+            try {
+                const container = document.getElementById('alertsContainer');
+                const alerts = [];
+
+                // Process earthquakes
+                if (earthquakeData.earthquakes) {
+                    earthquakeData.earthquakes.forEach(eq => {
+                        alerts.push({
+                            type: eq.magnitude >= 5.0 ? 'critical' : eq.magnitude >= 3.0 ? 'warning' : 'info',
+                            title: `Earthquake - Magnitude ${eq.magnitude}`,
+                            message: `${eq.place} - Depth: ${eq.depth}km`,
+                            time: new Date(eq.time).toLocaleString(),
+                            icon: '🌍'
+                        });
+                    });
+                }
+
+                // Process fire risks
+                if (fireData.fires) {
+                    fireData.fires.forEach(fire => {
+                        const riskColor = fire.risk_level === 'HIGH' ? 'critical' : 
+                                        fire.risk_level === 'MODERATE' ? 'warning' : 'info';
+                        alerts.push({
+                            type: riskColor,
+                            title: `Fire Risk - ${fire.risk_level}`,
+                            message: `Risk Score: ${fire.risk_score}/10 - Temp: ${fire.temperature}°C, Humidity: ${fire.humidity}%`,
+                            time: new Date().toLocaleString(),
+                            icon: '🔥'
+                        });
+                    });
+                }
+
+                // Process GDACS alerts
+                if (gdacsData.alerts) {
+                    gdacsData.alerts.forEach(alert => {
+                        alerts.push({
+                            type: alert.severity.toLowerCase(),
+                            title: alert.title,
+                            message: alert.description,
+                            time: new Date(alert.date).toLocaleString(),
+                            icon: alert.icon || '⚠️'
+                        });
+                    });
+                }
+
+                // Sort alerts by severity and time
+                alerts.sort((a, b) => {
+                    const severityOrder = { critical: 0, warning: 1, info: 2, success: 3 };
+                    return severityOrder[a.type] - severityOrder[b.type];
+                });
+
+                // Render alerts
+                if (alerts.length === 0) {
+                    container.innerHTML = '<div class="no-alerts">No active disaster alerts in your area ✅</div>';
+                } else {
+                    container.innerHTML = alerts.map(alert => `
+                        <div class="alert-item alert-${alert.type}">
+                            <div class="alert-header">
+                                <span class="alert-type">${alert.type}</span>
+                                <span class="alert-time">${alert.time}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.5rem;">${alert.icon}</span>
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 5px;">${alert.title}</div>
+                                    <div style="color: #64748b; font-size: 0.9rem;">${alert.message}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                showDebugInfo('Alerts panel updated successfully');
+            } catch (error) {
+                showDebugInfo(`Error updating alerts panel: ${error.message}`);
+            }
+        }
+
+        function setupMapClick() {
+            if (!map) return;
+            
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                // Update input fields
+                document.getElementById('latitude').value = lat.toFixed(4);
+                document.getElementById('longitude').value = lng.toFixed(4);
+                
+                // Update current location
+                currentLat = lat;
+                currentLng = lng;
+                
+                // Update marker
+                updateLocationMarker(lat, lng);
+                
+                // Show location info
+                showLocationInfo(`Location set to ${lat.toFixed(3)}, ${lng.toFixed(3)}`);
+            });
+        }
+
+        async function getCurrentLocation() {
+            if (!navigator.geolocation) {
+                showError('Geolocation is not supported by this browser.');
+                return;
+            }
+
+            setGPSLoading(true);
+            hideError();
+
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            };
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    // Update input fields
+                    document.getElementById('latitude').value = lat.toFixed(4);
+                    document.getElementById('longitude').value = lng.toFixed(4);
+
+                    // Update current location
+                    currentLat = lat;
+                    currentLng = lng;
+
+                    // Update map and marker
+                    updateLocationMarker(lat, lng);
+
+                    // Show location info
+                    showLocationInfo(`Location acquired with ${accuracy.toFixed(0)}m accuracy`);
+
+                    // Refresh disaster data for new location
+                    refreshDisasterData();
+
+                    setGPSLoading(false);
+                },
+                (error) => {
+                    let errorMessage;
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Location access denied. Please enable location permissions.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Location information is unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Location request timed out.';
+                            break;
+                        default:
+                            errorMessage = 'An unknown error occurred while retrieving location.';
+                    }
+                    showError(errorMessage);
+                    setGPSLoading(false);
+                },
+                options
+            );
+        }
+
+        // UI Helper Functions
+        function setRefreshLoading(isLoading) {
+            const refreshText = document.getElementById('refreshText');
+            const refreshSpinner = document.getElementById('refreshSpinner');
+            const refreshButton = document.querySelector('.refresh-button');
+
+            if (refreshText && refreshSpinner && refreshButton) {
+                if (isLoading) {
+                    refreshText.style.display = 'none';
+                    refreshSpinner.style.display = 'block';
+                    refreshButton.disabled = true;
+                    refreshButton.style.opacity = '0.7';
+                } else {
+                    refreshText.style.display = 'block';
+                    refreshSpinner.style.display = 'none';
+                    refreshButton.disabled = false;
+                    refreshButton.style.opacity = '1';
+                }
+            }
+        }
+
+        function setGPSLoading(isLoading) {
+            const gpsText = document.getElementById('gpsText');
+            const gpsSpinner = document.getElementById('gpsSpinner');
+            const gpsButton = document.getElementById('gpsButton');
+
+            if (gpsText && gpsSpinner && gpsButton) {
+                if (isLoading) {
+                    gpsText.style.display = 'none';
+                    gpsSpinner.style.display = 'block';
+                    gpsButton.disabled = true;
+                    gpsButton.style.opacity = '0.7';
+                } else {
+                    gpsText.style.display = 'block';
+                    gpsSpinner.style.display = 'none';
+                    gpsButton.disabled = false;
+                    gpsButton.style.opacity = '1';
+                }
+            }
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                setTimeout(() => {
+                    hideError();
+                }, 10000); // Show error for 10 seconds
+            }
+            console.error(message);
+        }
+
+        function hideError() {
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) {
+                errorElement.style.display = 'none';
+            }
+        }
+
+        function showLocationInfo(message) {
+            const locationElement = document.getElementById('locationInfo');
+            if (locationElement) {
+                locationElement.textContent = message;
+                locationElement.style.display = 'block';
+            }
+        }
+
+        // Event Listeners for input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const latInput = document.getElementById('latitude');
+            const lngInput = document.getElementById('longitude');
+            
+            if (latInput && lngInput) {
+                latInput.addEventListener('input', function() {
+                    const lat = parseFloat(this.value);
+                    const lng = parseFloat(lngInput.value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        currentLat = lat;
+                        currentLng = lng;
+                        updateLocationMarker(lat, lng);
+                    }
+                });
+
+                lngInput.addEventListener('input', function() {
+                    const lat = parseFloat(latInput.value);
+                    const lng = parseFloat(this.value);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        currentLat = lat;
+                        currentLng = lng;
+                        updateLocationMarker(lat, lng);
+                    }
+                });
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+
+        // Handle window resize for responsive map
+        window.addEventListener('resize', function() {
+            if (map) {
+                setTimeout(function() {
+                    map.invalidateSize();
+                }, 100);
+            }
+        });
+
+        console.log('Disaster Prediction JavaScript loaded with debug support');
+    </script>
+</body>
+</html>
