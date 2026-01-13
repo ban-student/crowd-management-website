@@ -1,0 +1,1455 @@
+crowdmanagement.html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crowd Management Dashboard</title>
+    <style>
+       * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff7b54 0%, #ff6b35 25%, #f7931e 50%, #ff9f43 75%, #feca57 100%);
+            color: #2c2c54;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 159, 67, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(254, 202, 87, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 107, 53, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(255, 159, 67, 0.5);
+            box-shadow: 0 8px 32px rgba(255, 123, 84, 0.3);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 159, 67, 0.4);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 123, 84, 0.2);
+            color: #2c2c54;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(255, 107, 53, 0.3);
+            border-color: rgba(255, 107, 53, 0.6);
+        }
+        
+        .gate-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .crowd-level {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .low {
+            background-color: #00d2d3;
+            color: white;
+        }
+        
+        .medium {
+            background-color: #ff9f43;
+            color: white;
+        }
+        
+        .high {
+            background-color: #ff6348;
+            color: white;
+        }
+        
+        .critical {
+            background-color: #e55039;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        
+        .alert-panel {
+            background: rgba(229, 80, 57, 0.9);
+            border: 3px solid #e55039;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            animation: alertBlink 2s infinite;
+            color: white;
+            box-shadow: 0 6px 25px rgba(229, 80, 57, 0.4);
+        }
+        
+        @keyframes alertBlink {
+            0%,
+            50% {
+                background: rgba(229, 80, 57, 0.9);
+            }
+            25%,
+            75% {
+                background: rgba(229, 80, 57, 1);
+            }
+        }
+        
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+        
+        .communication-panel,
+        .emergency-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 159, 67, 0.4);
+            box-shadow: 0 4px 20px rgba(255, 123, 84, 0.2);
+            color: #2c2c54;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #ff7b54, #ff9f43);
+            color: white;
+            border: none;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #feca57, #ff9f43);
+            color: #2c2c54;
+            border: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #e55039, #ff6348);
+            color: white;
+            border: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #00d2d3, #0fb9b1);
+            color: white;
+            border: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sos-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff0000, #cc0000);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border: 4px solid #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(255, 0, 0, 0.4);
+        }
+        
+        .sos-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 0, 0, 0.6);
+        }
+        
+        .sos-button.active {
+            animation: sosAlert 0.5s infinite alternate;
+        }
+        
+        @keyframes sosAlert {
+            from {
+                transform: scale(1.1);
+            }
+            to {
+                transform: scale(1.2);
+            }
+        }
+        
+        .message-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 159, 67, 0.5);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #2c2c54;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .message-input::placeholder {
+            color: rgba(44, 44, 84, 0.6);
+        }
+        
+        .location-info {
+            background: rgba(255, 159, 67, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 123, 84, 0.6);
+            color: #2c2c54;
+            font-weight: 500;
+        }
+        
+        .exit-routes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .exit-route {
+            padding: 10px;
+            background: rgba(76, 175, 80, 0.3);
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .exit-route.highlighted {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.6);
+            animation: highlight 1s infinite alternate;
+        }
+        
+        @keyframes highlight {
+            from {
+                box-shadow: 0 0 10px #4CAF50;
+            }
+            to {
+                box-shadow: 0 0 20px #4CAF50;
+            }
+        }
+        
+        .staff-alerts {
+            background: rgba(254, 202, 87, 0.8);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 159, 67, 0.6);
+        }
+        
+        .alert-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ff7b54;
+            color: #2c2c54;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 159, 67, 0.3);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+            color: #2c2c54;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        h3 {
+            margin-bottom: 15px;
+            color: #2c2c54;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            opacity: 0.8;
+            float: right;
+        }
+        
+        .ml-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #ff7b54;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 6px 25px rgba(255, 123, 84, 0.3);
+            color: #2c2c54;
+        }
+        
+        .learning-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .prediction-card {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .training-progress {
+            background: rgba(33, 150, 243, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .model-accuracy {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .accuracy-bar {
+            flex: 1;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .accuracy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .event-type-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .event-type {
+            padding: 8px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+        
+        .event-type.selected {
+            background: #9C27B0;
+            border-color: #9C27B0;
+        }
+        
+        .prediction-timeline {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .pulse-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-right: 10px;
+        }
+        
+        .pulse-green {
+            background: #4CAF50;
+        }
+        
+        .pulse-orange {
+            background: #FF9800;
+        }
+        
+        .pulse-red {
+            background: #f44336;
+        }
+        .back-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: linear-gradient(45deg, #ff6b35, #ff9f43);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    font-size: 14px;
+}
+
+.back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
+.back-button:active {
+    transform: translateY(0);
+}
+    </style>
+</head>
+
+<body>
+    <button class="back-button" onclick="goBackToDashboard()">
+    ← Back
+</button>
+    <div class="container">
+        <div class="header">
+            <h1>🏟️ Smart Crowd Management System</h1>
+            <div class="location-info">
+                <strong>📍 Current Location:</strong> <span id="currentLocation">Main Event Venue</span> |
+                <strong>🕒 Time:</strong> <span id="currentTime"></span>
+                <div style="margin-top: 20px;">
+                    <h4>Emergency Actions</h4>
+                    <button class="btn btn-danger" onclick="fireAlarm()">🔥 Fire Alarm</button>
+                    <button class="btn btn-warning" onclick="medicalEmergency()">🏥 Medical Emergency</button>
+                    <button class="btn btn-primary" onclick="securityAlert()">🔒 Security Alert</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Analytics Panel -->
+        <div class="status-card" style="margin-top: 30px;">
+            <h3>📈 Real-time Learning Insights</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <div>
+                    <h4>🕐 Today's Learned Patterns</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 8px; background: rgba(76,175,80,0.2); margin: 5px 0; border-radius: 5px;">
+                            ✅ 2:30 PM - Unexpected lunch rush (+45%)
+                        </li>
+                        <li style="padding: 8px; background: rgba(33,150,243,0.2); margin: 5px 0; border-radius: 5px;">
+                            📊 Gate 3 efficiency improved (+20%)
+                        </li>
+                        <li style="padding: 8px; background: rgba(255,152,0,0.2); margin: 5px 0; border-radius: 5px;">
+                            ⚠️ Weather impact: Rain = +30% Gate 1 usage
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>🎯 Prediction Confidence</h4>
+                    <div style="margin: 10px 0;">
+                        <strong>Aarti Time Surge:</strong>
+                        <div class="progress-bar" style="height: 8px; margin: 5px 0;">
+                            <div class="progress-fill" style="width: 96%; background: #4CAF50;"></div>
+                        </div>
+                        96% confident
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>Gate Preference:</strong>
+                        <div class="progress-bar" style="height: 8px; margin: 5px 0;">
+                            <div class="progress-fill" style="width: 89%; background: #2196F3;"></div>
+                        </div>
+                        89% confident
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Status -->
+        <div class="status-grid">
+            <div class="status-card">
+                <h3>🚪 Gate Status - Banke Bihari</h3>
+                <div class="gate-status">
+                    <span>Main Gate (North)</span>
+                    <span class="crowd-level high" id="gate1">HIGH</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 92%; background: #f44336;"></div>
+                </div>
+
+                <div class="gate-status">
+                    <span>Side Gate (East)</span>
+                    <span class="crowd-level medium" id="gate2">MEDIUM</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 58%; background: #FF9800;"></div>
+                </div>
+
+                <div class="gate-status">
+                    <span>VIP Gate (West)</span>
+                    <span class="crowd-level low" id="gate3">LOW</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 25%; background: #4CAF50;"></div>
+                </div>
+
+                <div class="gate-status">
+                    <span>Emergency Exit (South)</span>
+                    <span class="crowd-level low" id="gate4">CLEAR</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 5%; background: #4CAF50;"></div>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3>🏛️ Temple Zones - Live Status</h3>
+                <div class="staff-alerts">
+                    <div class="alert-item">
+                        <strong>Darshan Area:</strong> 78% capacity (1,170/1,500)
+                        <span class="timestamp">Live</span>
+                    </div>
+                    <div class="alert-item">
+                        <strong>Courtyard:</strong> 45% capacity (900/2,000)
+                        <span class="timestamp">Live</span>
+                    </div>
+                    <div class="alert-item">
+                        <strong>Entrance Area:</strong> 92% capacity (736/800)
+                        <span class="timestamp">Alert!</span>
+                    </div>
+                    <div class="alert-item">
+                        <strong>Parking:</strong> 65% capacity (780/1,200)
+                        <span class="timestamp">Live</span>
+                    </div>
+                </div>
+                <button class="btn btn-warning" onclick="deployTempleStaff()">👮 Deploy Temple Security</button>
+            </div>
+
+            <div class="status-card">
+                <h3>📊 Banke Bihari Analytics</h3>
+                <p><strong>Current Devotees:</strong> <span id="totalCount">3,847</span></p>
+                <p><strong>Today's Peak:</strong> 4,200 (during Rajbhog Aarti)</p>
+                <p><strong>Temple Capacity:</strong> 78% (Normal Day)</p>
+                <p><strong>Next Aarti Crowd:</strong> <span class="crowd-level critical">VERY HIGH</span></p>
+                <p><strong>Weather Impact:</strong> +15% (Pleasant winter)</p>
+                <button class="btn btn-primary" onclick="refreshTempleData()">🔄 Refresh Temple Data</button>
+                <button class="btn btn-success" onclick="showAartiSchedule()">🕐 Today's Aarti Schedule</button>
+            </div>
+        </div>
+
+        <!-- Emergency Alert Panel -->
+        <div id="emergencyAlert" class="alert-panel" style="display: none;">
+            <h3>🚨 EMERGENCY DETECTED!</h3>
+            <p id="emergencyMessage">High crowd density detected at Gate 1. Immediate action required!</p>
+            <button class="btn btn-danger" onclick="acknowledgeAlert()">✅ Acknowledge</button>
+            <button class="btn btn-warning" onclick="evacuationProtocol()">🏃 Start Evacuation</button>
+        </div>
+
+        <!-- AI Learning Panel -->
+        <div class="ml-panel">
+            <h3>🤖 AI Model & Predictive Analytics</h3>
+
+            <div class="learning-stats">
+                <div class="stat-item">
+                    <h4>📊 Events Analyzed</h4>
+                    <p style="font-size: 24px; font-weight: bold;" id="eventsAnalyzed">247</p>
+                    <small>Historical data points</small>
+                </div>
+                <div class="stat-item">
+                    <h4>🎯 Prediction Accuracy</h4>
+                    <div class="model-accuracy">
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 94.7%;"></div>
+                        </div>
+                        <span>94.7%</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <h4>🧠 Model Status</h4>
+                    <p style="color: #4CAF50; font-weight: bold;">
+                        <span class="pulse-indicator pulse-green"></span>Active Learning
+                    </p>
+                </div>
+                <div class="stat-item">
+                    <h4>⏱️ Last Updated</h4>
+                    <p id="lastModelUpdate">2 min ago</p>
+                    <small>Real-time learning</small>
+                </div>
+            </div>
+
+            <div class="training-progress">
+                <h4>🔄 Continuous Learning Status</h4>
+                <div class="progress-bar" style="height: 15px;">
+                    <div class="progress-fill" style="width: 78%; background: linear-gradient(90deg, #9C27B0, #E1BEE7);"></div>
+                </div>
+                <small>Processing today's crowd patterns... Learning surge patterns</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>📈 Learned Patterns</h4>
+                    <div class="prediction-card">
+                        <strong>🕐 Banke Bihari Aarti Predictions:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>Mangla Aarti (5:45 AM): +180% surge expected</li>
+                            <li>Rajbhog Aarti (11:15 AM): +200% surge expected</li>
+                            <li>Sandhya Aarti (6:45 PM): +320% PEAK surge</li>
+                            <li>Shayan Aarti (9:30 PM): +240% surge expected</li>
+                            <li>Thursday Special: +180% (Brihaspatiwar)</li>
+                            <li>Weekend Evening: +200% (5-8 PM rush)</li>
+                        </ul>
+                        <small><strong>🎉 Upcoming Festival:</strong> Radha Ashtami - Expected 25,000 devotees</small>
+                    </div>
+                </div>
+                <div>
+                    <h4>🔮 Next Hour Predictions</h4>
+                    <div class="prediction-timeline">
+                        <div class="timeline-item">
+                            <span>6:30 PM - Pre-Sandhya Aarti rush begins</span>
+                            <span class="crowd-level critical">CRITICAL</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span>6:45 PM - Sandhya Aarti peak time</span>
+                            <span class="crowd-level critical">PEAK</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span>7:30 PM - Post-aarti gradual decrease</span>
+                            <span class="crowd-level medium">MEDIUM</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span>9:15 PM - Pre-Shayan Aarti buildup</span>
+                            <span class="crowd-level high">HIGH</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Type Selection for Learning -->
+        <div class="status-card" style="margin-bottom: 30px;">
+            <h3>🎪 Event Type Configuration</h3>
+            <p>Select current event type for better prediction accuracy:</p>
+            <div class="event-type-selector">
+                <div class="event-type selected" onclick="selectEventType(this, 'bankebihari')">🏛️ Banke Bihari Mandir</div>
+                <div class="event-type" onclick="selectEventType(this, 'religious')">🕉️ General Religious</div>
+                <div class="event-type" onclick="selectEventType(this, 'sports')">⚽ Sports Match</div>
+                <div class="event-type" onclick="selectEventType(this, 'concert')">🎵 Concert/Show</div>
+                <div class="event-type" onclick="selectEventType(this, 'festival')">🎉 Festival</div>
+                <div class="event-type" onclick="selectEventType(this, 'conference')">👔 Conference</div>
+            </div>
+            <button class="btn btn-primary" onclick="trainModel()">🧠 Retrain Model</button>
+            <button class="btn btn-success" onclick="exportLearnings()">💾 Export Learnings</button>
+        </div>
+
+        <!-- Control Panels -->
+        <div class="control-panel">
+            <!-- Communication Panel -->
+            <div class="communication-panel">
+                <h3>📢 Public Communication</h3>
+
+                <div>
+                    <h4>Digital Signboard Messages</h4>
+                    <textarea class="message-input" id="signboardMessage" placeholder="Enter message for digital signboards..."></textarea>
+                    <button class="btn btn-primary" onclick="broadcastSignboard()">📺 Send to Signboards</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h4>Loudspeaker Announcements</h4>
+                    <textarea class="message-input" id="loudspeakerMessage" placeholder="Enter announcement..."></textarea>
+                    <button class="btn btn-success" onclick="makeAnnouncement()">📻 Make Announcement</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h4>Quick Messages</h4>
+                    <button class="btn btn-warning" onclick="sendQuickMessage('Gate 1 crowded. Please use Gate 3.')">⚠️ Gate Redirect</button>
+                    <button class="btn btn-primary" onclick="sendQuickMessage('Please maintain social distancing.')">👥 Social Distance</button>
+                    <button class="btn btn-success" onclick="sendQuickMessage('Event starting in 15 minutes.')">🕒 Time Update</button>
+                </div>
+            </div>
+
+            <!-- Emergency Management Panel -->
+            <div class="emergency-panel">
+                <h3>🚨 Emergency Management</h3>
+
+                <div style="text-align: center;">
+                    <div class="sos-button" id="sosButton" onclick="triggerSOS()">
+                        SOS<br>EMERGENCY
+                    </div>
+                    <p><strong>Click for immediate emergency response</strong></p>
+                </div>
+
+                <div>
+                    <h4>🚪 Safe Exit Routes</h4>
+                    <div class="exit-routes">
+                        <div class="exit-route" onclick="highlightExit(this)">Exit A</div>
+                        <div class="exit-route" onclick="highlightExit(this)">Exit B</div>
+                        <div class="exit-route highlighted" onclick="highlightExit(this)">Exit C</div>
+                        <div class="exit-route" onclick="highlightExit(this)">Exit D</div>
+                    </div>
+                    <button class="btn btn-success" onclick="highlightAllExits()">✨ Highlight All Safe Exits</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h4>🧠 AI Predictions</h4>
+                    <button class="btn btn-success" onclick="predictSurgeTime()">🔮 Predict Next Surge</button>
+                    <button class="btn btn-primary" onclick="updateMLModel()">📊 Update ML Model</button>
+                    <button class="btn btn-warning" onclick="alert('🎯 Smart recommendations based on learned patterns:\n\n• Deploy 2 extra staff at Gate 1 by 6:15 PM\n• Prepare crowd barriers for aarti rush\n• Increase security at main entrance\n• Setup additional signage for overflow')">💡 AI Recommendations</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let emergencyActive = false;
+        let sosActive = false;
+        let currentEventType = 'bankebihari';
+        let modelData = {
+            eventsAnalyzed: 1847, // Banke Bihari has more data
+            accuracy: 96.3,
+            lastUpdate: new Date(),
+            patterns: {
+                bankebihari: {
+                    // Daily Aarti Timings
+                    manglaAarti: {
+                        time: '05:45',
+                        surge: 180,
+                        duration: '30min',
+                        description: 'Mangla Aarti'
+                    },
+                    shringar: {
+                        time: '08:30',
+                        surge: 150,
+                        duration: '45min',
+                        description: 'Shringar Darshan'
+                    },
+                    rajbhog: {
+                        time: '11:15',
+                        surge: 200,
+                        duration: '30min',
+                        description: 'Rajbhog Aarti'
+                    },
+                    utthapan: {
+                        time: '15:30',
+                        surge: 120,
+                        duration: '20min',
+                        description: 'Utthapan (Wake up)'
+                    },
+                    sandhyaAarti: {
+                        time: '18:45',
+                        surge: 320,
+                        duration: '40min',
+                        description: 'Sandhya Aarti - Peak'
+                    },
+                    shayanAarti: {
+                        time: '21:30',
+                        surge: 240,
+                        duration: '35min',
+                        description: 'Shayan Aarti'
+                    },
+
+                    // Festival Patterns
+                    janmashtami: {
+                        surge: 500,
+                        description: 'Krishna Janmashtami - Highest crowd'
+                    },
+                    holi: {
+                        surge: 450,
+                        description: 'Holi Festival Rush'
+                    },
+                    radhaashtami: {
+                        surge: 380,
+                        description: 'Radha Ashtami'
+                    },
+                    govardhanPuja: {
+                        surge: 300,
+                        description: 'Govardhan Puja'
+                    },
+
+                    // Weekly Patterns
+                    thursday: {
+                        surge: 180,
+                        description: 'Brihaspatiwar - Special day'
+                    },
+                    sunday: {
+                        surge: 160,
+                        description: 'Weekend rush'
+                    },
+
+                    // Monthly Patterns
+                    ekadashi: {
+                        surge: 220,
+                        description: 'Ekadashi fast day'
+                    },
+                    purnima: {
+                        surge: 200,
+                        description: 'Full moon day'
+                    },
+                    amavasya: {
+                        surge: 140,
+                        description: 'New moon day'
+                    },
+
+                    // Seasonal Patterns
+                    winter: {
+                        surge: 140,
+                        description: 'Winter season (Oct-Feb)'
+                    },
+                    summer: {
+                        surge: 110,
+                        description: 'Summer season (Mar-Jun)'
+                    },
+                    monsoon: {
+                        surge: 90,
+                        description: 'Monsoon season (Jul-Sep)'
+                    },
+
+                    // Special Timings
+                    peakTouristSeason: {
+                        time: 'Oct-Mar',
+                        surge: 160,
+                        description: 'Tourist season'
+                    },
+                    weekendEvening: {
+                        time: '17:00-20:00',
+                        surge: 200,
+                        description: 'Weekend evening rush'
+                    }
+                },
+                religious: {
+                    aartiTime: {
+                        time: '18:30',
+                        surge: 240
+                    },
+                    morningPrayer: {
+                        time: '06:00',
+                        surge: 180
+                    },
+                    eveningPrayer: {
+                        time: '19:00',
+                        surge: 220
+                    }
+                },
+                sports: {
+                    matchBreak: {
+                        time: '45-60min',
+                        surge: 180
+                    },
+                    matchStart: {
+                        time: '-30min',
+                        surge: 200
+                    },
+                    matchEnd: {
+                        time: '+15min',
+                        surge: 250
+                    }
+                },
+                concert: {
+                    showStart: {
+                        time: '-45min',
+                        surge: 300
+                    },
+                    intermission: {
+                        time: 'mid-show',
+                        surge: 150
+                    },
+                    showEnd: {
+                        time: '+10min',
+                        surge: 280
+                    }
+                },
+                festival: {
+                    peakHours: {
+                        time: '11:00-14:00',
+                        surge: 150
+                    },
+                    eveningRush: {
+                        time: '17:00-20:00',
+                        surge: 200
+                    },
+                    foodTime: {
+                        time: '12:00-13:00',
+                        surge: 120
+                    }
+                }
+            },
+            predictions: [],
+            bankeBihariData: {
+                location: {
+                    name: "Shri Banke Bihari Mandir",
+                    address: "Vrindavan, Mathura, Uttar Pradesh",
+                    coordinates: {
+                        lat: 27.5771,
+                        lng: 77.7003
+                    },
+                    gates: ["Main Gate (North)", "Side Gate (East)", "VIP Gate (West)", "Emergency Exit (South)"]
+                },
+                capacity: {
+                    normal: 5000,
+                    festival: 25000,
+                    emergency: 30000
+                },
+                crowdZones: {
+                    darshan: {
+                        capacity: 1500,
+                        currentLoad: 78
+                    },
+                    courtyard: {
+                        capacity: 2000,
+                        currentLoad: 45
+                    },
+                    entrance: {
+                        capacity: 800,
+                        currentLoad: 92
+                    },
+                    parking: {
+                        capacity: 1200,
+                        currentLoad: 65
+                    }
+                },
+                specialEvents: [{
+                    name: "Janmashtami",
+                    date: "2025-08-15",
+                    expectedCrowd: 50000,
+                    duration: "24 hours",
+                    peakTime: "23:30-01:30"
+                }, {
+                    name: "Holi",
+                    date: "2025-03-13",
+                    expectedCrowd: 35000,
+                    duration: "12 hours",
+                    peakTime: "10:00-16:00"
+                }, {
+                    name: "Radha Ashtami",
+                    date: "2025-09-09",
+                    expectedCrowd: 25000,
+                    duration: "8 hours",
+                    peakTime: "05:00-09:00"
+                }],
+                weatherImpact: {
+                    rain: {
+                        effect: "+35%",
+                        reason: "People prefer covered darshan area"
+                    },
+                    heat: {
+                        effect: "-20%",
+                        reason: "Reduced afternoon visits"
+                    },
+                    winter: {
+                        effect: "+15%",
+                        reason: "Pleasant weather attracts more devotees"
+                    }
+                }
+            }
+        };
+
+        // Continuous learning simulation
+        setInterval(() => {
+            updateMLModel();
+        }, 30000); // Update every 30 seconds
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+        }
+
+        // Initialize
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Simulate crowd data updates
+        setInterval(() => {
+            if (!emergencyActive) {
+                updateCrowdData();
+            }
+        }, 5000);
+
+        function updateCrowdData() {
+            const gates = ['gate1', 'gate2', 'gate3'];
+            const levels = ['low', 'medium', 'high'];
+            const colors = ['#4CAF50', '#FF9800', '#f44336'];
+
+            gates.forEach(gate => {
+                const randomLevel = Math.floor(Math.random() * 3);
+                const element = document.getElementById(gate);
+                element.className = `crowd-level ${levels[randomLevel]}`;
+                element.textContent = levels[randomLevel].toUpperCase();
+            });
+
+            // Update total count
+            const newCount = Math.floor(Math.random() * 1000) + 2000;
+            document.getElementById('totalCount').textContent = newCount.toLocaleString();
+
+            // Check for emergency conditions
+            if (Math.random() > 0.9) {
+                triggerEmergencyAlert();
+            }
+        }
+
+        function triggerEmergencyAlert() {
+            emergencyActive = true;
+            const alertPanel = document.getElementById('emergencyAlert');
+            alertPanel.style.display = 'block';
+
+            // Play alert sound (in real implementation)
+            console.log('🚨 EMERGENCY ALERT TRIGGERED!');
+        }
+
+        function acknowledgeAlert() {
+            emergencyActive = false;
+            document.getElementById('emergencyAlert').style.display = 'none';
+            console.log('✅ Emergency alert acknowledged');
+        }
+
+        function deployStaff() {
+            alert('🚨 Emergency staff deployment initiated!\n📍 3 security personnel dispatched to Gate 1\n⏰ ETA: 2 minutes');
+            console.log('Staff deployment triggered');
+        }
+
+        function refreshData() {
+            updateCrowdData();
+            alert('🔄 Data refreshed successfully!');
+        }
+
+        function broadcastSignboard() {
+            const message = document.getElementById('signboardMessage').value;
+            if (message.trim()) {
+                alert(`📺 Message sent to all digital signboards:\n"${message}"`);
+                document.getElementById('signboardMessage').value = '';
+                console.log('Signboard message:', message);
+            }
+        }
+
+        function makeAnnouncement() {
+            const message = document.getElementById('loudspeakerMessage').value;
+            if (message.trim()) {
+                alert(`📻 Announcement broadcasted:\n"${message}"`);
+                document.getElementById('loudspeakerMessage').value = '';
+                console.log('Loudspeaker announcement:', message);
+            }
+        }
+
+        function sendQuickMessage(message) {
+            alert(`📢 Quick message broadcasted:\n"${message}"`);
+            console.log('Quick message:', message);
+        }
+
+        function triggerSOS() {
+            if (sosActive) return;
+
+            sosActive = true;
+            const sosButton = document.getElementById('sosButton');
+            sosButton.classList.add('active');
+
+            // Get location (simulated)
+            const location = "Main Event Venue - Sector 5, Gate 1";
+            const coordinates = "28.4595° N, 77.0266° E";
+
+            // Emergency response simulation
+            alert(`🚨 SOS ACTIVATED!\n\n📍 Location: ${location}\n🌐 Coordinates: ${coordinates}\n\n🚓 Police notified: Response team dispatched\n🚑 Ambulance alerted: Medical team en route\n⏰ ETA: 3-5 minutes\n\n✅ Emergency services have been automatically contacted!`);
+
+            // Auto-highlight all safe exits
+            highlightAllExits();
+
+            // Reset SOS button after 10 seconds
+            setTimeout(() => {
+                sosActive = false;
+                sosButton.classList.remove('active');
+            }, 10000);
+
+            console.log('🆘 SOS EMERGENCY TRIGGERED!', {
+                location: location,
+                coordinates: coordinates,
+                timestamp: new Date().toISOString(),
+                services_notified: ['Police', 'Ambulance', 'Fire Department']
+            });
+        }
+
+        function highlightExit(element) {
+            element.classList.toggle('highlighted');
+            console.log('Exit route toggled:', element.textContent);
+        }
+
+        function highlightAllExits() {
+            const exits = document.querySelectorAll('.exit-route');
+            exits.forEach(exit => {
+                exit.classList.add('highlighted');
+            });
+            alert('✨ All safe exit routes are now highlighted and illuminated!');
+            console.log('All exit routes highlighted for emergency evacuation');
+        }
+
+        function fireAlarm() {
+            alert('🔥 FIRE ALARM ACTIVATED!\n\n🚨 All fire safety systems engaged\n🚪 Emergency exits highlighted\n📢 Evacuation announcement playing\n🚒 Fire department notified');
+            highlightAllExits();
+            triggerEmergencyAlert();
+        }
+
+        function medicalEmergency() {
+            alert('🏥 MEDICAL EMERGENCY PROTOCOL ACTIVATED!\n\n🚑 Ambulance dispatched\n👨‍⚕️ Medical team alerted\n📍 Location shared with emergency services\n🆔 Incident ID: MED-' + Math.random().toString(36).substr(2, 9).toUpperCase());
+        }
+
+        function securityAlert() {
+            alert('🔒 SECURITY ALERT ISSUED!\n\n🚓 Security personnel dispatched\n📹 CCTV monitoring intensified\n📱 Local authorities notified\n🆔 Alert ID: SEC-' + Math.random().toString(36).substr(2, 9).toUpperCase());
+        }
+
+        function updateMLModel() {
+            // Simulate continuous learning
+            modelData.eventsAnalyzed += Math.floor(Math.random() * 3) + 1;
+            modelData.accuracy = Math.min(98.5, modelData.accuracy + (Math.random() * 0.2 - 0.1));
+            modelData.lastUpdate = new Date();
+
+            // Update display
+            document.getElementById('eventsAnalyzed').textContent = modelData.eventsAnalyzed;
+            document.querySelector('.accuracy-fill').style.width = modelData.accuracy + '%';
+            document.querySelector('.model-accuracy span').textContent = modelData.accuracy.toFixed(1) + '%';
+
+            // Update last update time
+            const timeDiff = Math.floor((new Date() - modelData.lastUpdate) / 1000 / 60);
+            document.getElementById('lastModelUpdate').textContent =
+                timeDiff < 1 ? 'Just now' : timeDiff + ' min ago';
+
+            // Generate new predictions
+            generatePredictions();
+
+            console.log('🤖 ML Model updated:', {
+                events: modelData.eventsAnalyzed,
+                accuracy: modelData.accuracy.toFixed(1) + '%',
+                eventType: currentEventType
+            });
+        }
+
+        function generatePredictions() {
+            const now = new Date();
+            const predictions = [];
+
+            // Generate predictions based on current event type
+            const patterns = modelData.patterns[currentEventType];
+
+            if (currentEventType === 'bankebihari') {
+                // Banke Bihari specific predictions
+                predictions.push({
+                    time: '6:30 PM',
+                    event: 'Pre-Sandhya Aarti devotee gathering',
+                    level: 'CRITICAL',
+                    confidence: 98,
+                    details: 'Main Gate will be 95% full. Divert to Side Gate.'
+                });
+                predictions.push({
+                    time: '6:45 PM',
+                    event: 'Sandhya Aarti - Peak crowd time',
+                    level: 'PEAK',
+                    confidence: 99,
+                    details: 'All gates 90%+ full. Emergency staff needed.'
+                });
+                predictions.push({
+                    time: '9:15 PM',
+                    event: 'Pre-Shayan Aarti buildup',
+                    level: 'HIGH',
+                    confidence: 96,
+                    details: 'Second wave of evening devotees'
+                });
+            } else if (currentEventType === 'religious') {
+                // General religious predictions
+                predictions.push({
+                    time: '6:30 PM',
+                    event: 'Pre-aarti rush begins',
+                    level: 'CRITICAL',
+                    confidence: 96
+                });
+            } else if (currentEventType === 'sports') {
+                predictions.push({
+                    time: 'Half-time',
+                    event: 'Match break crowd movement',
+                    level: 'HIGH',
+                    confidence: 94
+                });
+            }
+
+            modelData.predictions = predictions;
+        }
+
+        function showAartiSchedule() {
+            const schedule = `🏛️ BANKE BIHARI AARTI SCHEDULE - Today
+            
+🌅 MANGLA AARTI
+⏰ Time: 5:45 AM - 6:15 AM
+👥 Expected Crowd: +180% surge
+📍 Best Gates: Side Gate (East), VIP Gate
+
+☀️ SHRINGAR DARSHAN  
+⏰ Time: 8:30 AM - 9:15 AM
+👥 Expected Crowd: +150% surge
+📍 Recommended: All gates open
+
+🍽️ RAJBHOG AARTI
+⏰ Time: 11:15 AM - 11:45 AM  
+👥 Expected Crowd: +200% surge
+📍 Peak time - All staff needed
+
+😴 UTTHAPAN (Wake Up)
+⏰ Time: 3:30 PM - 3:50 PM
+👥 Expected Crowd: +120% surge
+📍 Moderate crowd expected
+
+🌆 SANDHYA AARTI (PEAK!)
+⏰ Time: 6:45 PM - 7:25 PM
+👥 Expected Crowd: +320% HIGHEST surge
+🚨 CRITICAL: Maximum security needed
+📍 All gates, emergency staff deployed
+
+🌙 SHAYAN AARTI
+⏰ Time: 9:30 PM - 10:05 PM
+👥 Expected Crowd: +240% surge  
+📍 Evening devotees peak
+
+💡 SMART RECOMMENDATIONS:
+• Deploy extra staff 30 min before each aarti
+• Keep VIP Gate open during Sandhya Aarti
+• Emergency exits must remain clear
+• Parking staff needed during peak hours`;
+
+            alert(schedule);
+        }
+
+        function deployTempleStaff() {
+            alert('👮 TEMPLE SECURITY DEPLOYMENT!\n\n📍 Immediate Actions:\n• 5 security guards to Main Gate\n• 3 volunteers to Darshan area\n• 2 crowd managers to entrance\n• 1 supervisor to coordinate\n\n⏰ ETA: 3 minutes\n🎯 Focus: Sandhya Aarti preparation');
+            console.log('Temple staff deployment triggered');
+        }
+
+        function refreshTempleData() {
+            // Update Banke Bihari specific data
+            const zones = ['darshan', 'courtyard', 'entrance', 'parking'];
+            zones.forEach(zone => {
+                const randomLoad = Math.floor(Math.random() * 40) + 60;
+                modelData.bankeBihariData.crowdZones[zone].currentLoad = randomLoad;
+            });
+
+            // Update total count for temple
+            const newCount = Math.floor(Math.random() * 2000) + 3000;
+            document.getElementById('totalCount').textContent = newCount.toLocaleString();
+
+            // Update next aarti info
+            const now = new Date();
+            const hour = now.getHours();
+            let nextAarti = '';
+
+            if (hour < 5) nextAarti = 'Mangla Aarti at 5:45 AM';
+            else if (hour < 8) nextAarti = 'Shringar at 8:30 AM';
+            else if (hour < 11) nextAarti = 'Rajbhog at 11:15 AM';
+            else if (hour < 15) nextAarti = 'Utthapan at 3:30 PM';
+            else if (hour < 18) nextAarti = 'Sandhya Aarti at 6:45 PM';
+            else if (hour < 21) nextAarti = 'Shayan Aarti at 9:30 PM';
+            else nextAarti = 'Mangla Aarti at 5:45 AM (Tomorrow)';
+
+            document.getElementById('nextAarti').textContent = nextAarti;
+
+            alert('🔄 Banke Bihari temple data refreshed!\n\n📊 Updated Information:\n• Real-time devotee count\n• Zone capacity status\n• Next aarti timing\n• Weather impact analysis');
+        }
+
+        function selectEventType(element, eventType) {
+            // Remove selection from all
+            document.querySelectorAll('.event-type').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Add selection to clicked
+            element.classList.add('selected');
+            currentEventType = eventType;
+
+            // Update predictions
+            generatePredictions();
+
+            alert(`🎪 Event type set to: ${element.textContent}\n🤖 ML model will now use ${eventType}-specific patterns for predictions!`);
+            console.log('Event type changed to:', eventType);
+        }
+
+        function trainModel() {
+            alert('🧠 TRAINING ML MODEL...\n\n📊 Analyzing current crowd data\n🔄 Updating prediction algorithms\n📈 Learning from today\'s patterns\n\n✅ Model training initiated!\nNew insights will be available in 5 minutes.');
+
+            // Simulate training progress
+            let progress = 0;
+            const trainingInterval = setInterval(() => {
+                progress += 10;
+                document.querySelector('.training-progress .progress-fill').style.width = progress + '%';
+
+                if (progress >= 100) {
+                    clearInterval(trainingInterval);
+                    modelData.accuracy += 0.3;
+                    document.querySelector('.accuracy-fill').style.width = modelData.accuracy + '%';
+                    document.querySelector('.model-accuracy span').textContent = modelData.accuracy.toFixed(1) + '%';
+                    alert('🎯 Model training completed!\nAccuracy improved to ' + modelData.accuracy.toFixed(1) + '%');
+                }
+            }, 500);
+
+            console.log('🧠 ML Model training started for event type:', currentEventType);
+        }
+
+        function exportLearnings() {
+            const learningData = {
+                eventType: currentEventType,
+                totalEvents: modelData.eventsAnalyzed,
+                accuracy: modelData.accuracy,
+                patterns: modelData.patterns[currentEventType],
+                predictions: modelData.predictions,
+                timestamp: new Date().toISOString(),
+                crowdData: {
+                    averagePeakTime: '18:30',
+                    maxCapacityReached: '85%',
+                    busyGates: ['Gate 1', 'Gate 2'],
+                    optimalStaffDeployment: 15
+                }
+            };
+
+            const dataStr = JSON.stringify(learningData, null, 2);
+            const dataBlob = new Blob([dataStr], {
+                type: 'application/json'
+            });
+            const url = URL.createObjectURL(dataBlob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `crowd-ml-data-${currentEventType}-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            alert('💾 ML Learning data exported!\n\n📁 File includes:\n• Crowd patterns\n• Prediction accuracy\n• Event-specific insights\n• Historical analysis\n\n✅ Data saved for future use!');
+            console.log('📊 ML data exported:', learningData);
+        }
+
+        function predictSurgeTime() {
+            const patterns = modelData.patterns[currentEventType];
+            let nextSurge = '';
+
+            switch (currentEventType) {
+                case 'religious':
+                    nextSurge = '6:30 PM - Aarti time (+240% surge expected)';
+                    break;
+                case 'sports':
+                    nextSurge = 'Half-time break (+180% surge expected)';
+                    break;
+                case 'concert':
+                    nextSurge = '45 min before show (+300% surge expected)';
+                    break;
+                default:
+                    nextSurge = 'Peak hours 11 AM - 2 PM (+150% surge expected)';
+            }
+
+            alert(`🔮 CROWD SURGE PREDICTION\n\n📅 Event Type: ${currentEventType.charAt(0).toUpperCase() + currentEventType.slice(1)}\n⏰ Next Expected Surge: ${nextSurge}\n🎯 Confidence: ${(Math.random() * 10 + 90).toFixed(1)}%\n\n💡 Recommendation: Pre-deploy staff 30 minutes before predicted surge`);
+        }
+
+        function evacuationProtocol() {
+            alert('🏃 EVACUATION PROTOCOL INITIATED!\n\n📢 Evacuation announcements started\n🚪 All emergency exits opened\n🚨 Emergency lighting activated\n👮 Crowd control teams deployed');
+            highlightAllExits();
+            acknowledgeAlert();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'e') {
+                e.preventDefault();
+                triggerSOS();
+            }
+        });
+        function goBackToDashboard() {
+    // Navigate back to analytics dashboard
+    window.location.href = 'analyticsdashboard.html';
+}
+
+        // Auto-generate predictions on load
+        generatePredictions();
+
+        console.log('🏟️ Smart Crowd Management System initialized with AI Learning');
+        console.log('💡 Tip: Press Ctrl+E for emergency SOS');
+        console.log('🤖 ML Model active - Learning from crowd patterns in real-time');
+    </script>
+</body>
+
+</html>
