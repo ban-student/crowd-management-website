@@ -1,0 +1,31 @@
+# Database Configuration
+DATABASE_URL=sqlite:///alert_system.db
+# For PostgreSQL: postgresql://user:password@localhost/alert_system
+
+# Twilio Configuration (for SMS)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid_here
+TWILIO_AUTH_TOKEN=your_twilio_auth_token_here
+TWILIO_PHONE_NUMBER=+1234567890
+
+# Email Configuration
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+EMAIL_USERNAME=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password_here
+
+# Flask Configuration
+FLASK_ENV=development
+FLASK_DEBUG=True
+SECRET_KEY=your_secret_key_here
+
+# Redis Configuration (for production scaling)
+REDIS_URL=redis://localhost:6379/0
+
+# Monitoring Configuration
+CRITICAL_OCCUPANCY_THRESHOLD=90
+WARNING_OCCUPANCY_THRESHOLD=75
+ESCALATION_TIMEOUT=300
+
+# API Configuration
+API_BASE_URL=http://localhost:5000
+CORS_ORIGINS=http://localhost:3000,http://localhost:8000
